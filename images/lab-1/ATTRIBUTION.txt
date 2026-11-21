@@ -1,0 +1,14 @@
+Dashboard screenshot attribution
+
+Creator: Microsoft, .NET documentation.
+Source: https://github.com/dotnet/docs/tree/main/docs/core/porting/github-copilot-upgrade/media/dashboard
+
+Files: activity.png, assessment.png, options.png, overview.png, tasks.png.
+
+License: Creative Commons Attribution 4.0 International (CC BY 4.0).
+License terms: https://creativecommons.org/licenses/by/4.0/
+Source license: https://github.com/dotnet/docs/blob/main/LICENSE
+
+Changes: Numbered callouts were added to the screenshots. The Options
+screenshot was cropped. Project names, task states, and results were not
+changed. These images illustrate the dashboard using the official sample.
