@@ -1,0 +1,43 @@
+Modernize CLI visual reference attribution
+
+The following screenshots are adapted from Microsoft .NET and Azure
+developer documentation:
+  assess-understand-application-menu.png
+  source-type-selection.png
+  assess-domain-selection.png
+  assess-configuration.png
+  assess-locally-option.png
+
+Source:
+https://github.com/MicrosoftDocs/azure-dev-docs/tree/main/articles/github-copilot-app-modernization/media/modernization-agent
+
+License: Creative Commons Attribution 4.0 International (CC BY 4.0).
+License terms: https://creativecommons.org/licenses/by/4.0/
+Source license:
+https://github.com/MicrosoftDocs/azure-dev-docs/blob/main/LICENSE
+
+Changes: Numbered callouts were added. Source-selection and domain-selection
+screenshots were cropped. Existing selections and values were not changed.
+These are official interface examples, not screenshots of the local rehearsal.
+
+plan-output.png is an image of actual Modernize CLI 1.0.95 planning output
+recorded against the original Contoso University sample during this session.
+It was reformatted for readability; the local sample path was shortened.
+It is not a screenshot of the interactive TUI.
+
+assessment-output.png is an excerpt of the actual code assessment generated
+by the .NET upgrade engine during Modernize CLI execution on that sample.
+It was reformatted as an image; the selected report values were not changed.
+
+project-output.png is an excerpt from the actual migrated
+ContosoUniversity.csproj showing its SDK and target framework.
+It was reformatted as an image, not captured from an editor window.
+
+execution-output.png contains actual CLI task events from the rehearsal:
+the upgrade task starting and completing, followed by the pagination task
+starting. It was reformatted as an image of recorded output, not a TUI screenshot.
+
+validation-output.png contains excerpts from actual successful dotnet build
+and dotnet test commands run after the rehearsal completed. All 19 discovered
+tests passed. Selected test names and the results were retained; timings and
+unrelated lines were omitted for readability. It is not a GUI screenshot.
