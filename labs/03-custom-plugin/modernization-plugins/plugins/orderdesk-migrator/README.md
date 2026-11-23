@@ -1,8 +1,8 @@
-# Modernize
+# OrderDesk migrator
 
 A packaged workshop workflow for a **C# / .NET Framework 4.8 Web API 2 to Python / FastAPI** port. This is not a .NET version upgrade.
 
-Install this folder in VS Code using **Chat: Install Plugin from Source**. Use the **Copilot** harness, enable the plugin, and start a fresh chat in the OrderDesk application folder. Select **modernize** in the agent picker.
+Install this folder in VS Code using **Chat: Install Plugin from Source**. Use the **Copilot** harness, enable the plugin, and start a fresh chat in the OrderDesk application folder. Select **orderdesk-migrator** in the agent picker.
 
 The agent uses five skills:
 

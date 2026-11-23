@@ -5,10 +5,10 @@
   },
   "plugins": [
     {
-      "name": "modernize",
+      "name": "orderdesk-migrator",
       "description": "A guided C# Web API 2 to Python FastAPI migration with an unchanged HTTP baseline.",
-      "version": "1.0.0",
-      "source": "./plugins/modernize"
+      "version": "1.0.1",
+      "source": "./plugins/orderdesk-migrator"
     }
   ]
 }

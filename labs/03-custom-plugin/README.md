@@ -1,6 +1,6 @@
 # Lab 3: Port a C# API to Python with a custom plugin
 
-Use a packaged **modernize** agent and five skills in **VS Code** to migrate OrderDesk from **C# / .NET Framework 4.8 Web API 2** to **Python / FastAPI**.
+Use a packaged **orderdesk-migrator** agent and five skills in **VS Code** to migrate OrderDesk from **C# / .NET Framework 4.8 Web API 2** to **Python / FastAPI**.
 
 Unlike a .NET version upgrade, this exercise translates models, business logic, validation, state, and hosting into another language. The API stays small: products, single-product orders, stock reservation, and cancellation. The unchanged HTTP baseline is the compatibility oracle.
 
@@ -57,10 +57,12 @@ For a subsequent run with the existing freeze, omit `-Freeze`:
 
 1. In the application window, choose the **Copilot** harness.
 2. Run **Chat: Install Plugin from Source** from the Command Palette.
-3. Enter the absolute path to your checkout's `labs\03-custom-plugin\modernization-plugins\plugins\modernize` folder.
+3. Enter the absolute path to your checkout's `labs\03-custom-plugin\modernization-plugins\plugins\orderdesk-migrator` folder.
 4. Review the local package and any trust/installation prompt before confirming.
-5. Run **Chat: Open Customizations**, open **Plugins**, and confirm **modernize** is installed/enabled in the intended context.
-6. Inspect its agent and five skills. Start a fresh application chat and select **modernize** in the agent picker.
+5. Run **Chat: Open Customizations**, open **Plugins**, and confirm **orderdesk-migrator** is installed/enabled in the intended context.
+6. Inspect its agent and five skills. Start a fresh application chat and select **orderdesk-migrator** in the agent picker.
+
+If you installed the earlier workshop package named `modernize`, remove only that local plugin before installing the renamed package. Leave Azure modernization agents, Upgrade, and other extensions installed; they are separate tools.
 
 If plugin support is disabled, consult the [VS Code plugin settings](https://code.visualstudio.com/docs/agent-customization/agent-plugins); do not bypass organization policy or trust prompts. If the agent or skills do not appear, stop and resolve installation/discovery before the exercise.
 
@@ -144,10 +146,11 @@ The tests cover the stated contract: seeded catalog, creation/retrieval/Location
 - **Port occupied:** stop the specific host you started, not every Python/.NET process. The harness owns localhost ports 5088 (legacy) and 5089 (Python).
 - **OWIN access denied:** an administrator may need a URL reservation for exactly `http://localhost:5088/` and your Windows account. Review that setup with them; do not grant wildcard URLs or Everyone access. The lab does not modify reservations automatically.
 - **Python environment absent:** execution must generate its package, pinned `requirements.txt`, and `.venv`; the starter intentionally contains no answer.
+- **Python package pin unavailable:** a configured mirror can lag public releases. Resolve compatible published versions available through the approved feed and update the generated pins before installing; do not silently change package-index settings.
 - **Baseline changed:** inspect the diff and fix the migration. Do not re-freeze to hide a failing port.
 
 Approval markers and hashes are review guardrails/tamper detection, not security enforcement. Follow normal tool/trust approvals.
 
-**Rehearsal status:** The legacy API and a separately authored Python compatibility smoke each passed the same 42-case HTTP baseline. The Python smoke is outside the starter and is not an agent-generated outcome. The installed-plugin VS Code flow still needs a live rehearsal; plugin installation requires explicit user approval, which was unavailable during validation. Agent discovery and approval gates are therefore not presented as recorded successful outcomes.
+**Rehearsal status:** A live VS Code run of installed `orderdesk-migrator` v1.0.1 completed assessment, planning, task generation, and Python execution, with the approval stops observed. In an isolated application copy, the real legacy API and agent-generated FastAPI service each passed all 42 frozen HTTP cases. Actual TRX identities, baseline hashes, runtime pins, host cleanup, and the generated JSON/OpenAPI behavior were checked. The shipped starter remains legacy-only; the Python answer, local environment, and rehearsal reports are outside it.
 
 **References:** [Plugin authoring](https://code.visualstudio.com/docs/agents/reference/agent-plugin-reference), [FastAPI validation/errors](https://fastapi.tiangolo.com/tutorial/handling-errors/), [Pydantic Decimal serialization](https://docs.pydantic.dev/latest/api/standard_library_types/), and [simplejson decimal support](https://simplejson.readthedocs.io/en/latest/).

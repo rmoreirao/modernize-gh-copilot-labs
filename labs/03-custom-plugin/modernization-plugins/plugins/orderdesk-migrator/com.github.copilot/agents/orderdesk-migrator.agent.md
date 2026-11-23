@@ -1,5 +1,5 @@
 ---
-name: modernize
+name: orderdesk-migrator
 description: Port a C# .NET Framework Web API 2 application to Python FastAPI through a frozen HTTP baseline and human-approved assessment, plan, tasks, and execution.
 user-invocable: true
 ---

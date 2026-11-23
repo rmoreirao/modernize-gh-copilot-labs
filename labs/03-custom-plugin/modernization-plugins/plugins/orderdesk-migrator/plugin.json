@@ -1,6 +1,6 @@
 {
   "$schema": "https://agent-plugins.org/schemas/1.0.0/plugin.schema.json",
-  "name": "modernize",
-  "version": "1.0.0",
+  "name": "orderdesk-migrator",
+  "version": "1.0.1",
   "description": "Assess, plan, task, and execute a contract-preserving C# to Python API migration."
 }
