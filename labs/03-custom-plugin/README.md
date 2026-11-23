@@ -50,14 +50,14 @@ The [manifest](modernization-plugins/plugins/orderdesk-migrator/plugin.json) ide
 
 `com.github.copilot` holds harness-specific customization; `skills` holds portable instructions. Within skills, `scripts` contains executable helpers and `templates` contains reusable scaffolding. Crucially, `baseline-tests\tests` checks **plugin tooling**, not application behavior: the application-specific contract and cases do not ship here.
 
-| Component | Responsibility |
-| --- | --- |
-| [orderdesk-migrator agent](modernization-plugins/plugins/orderdesk-migrator/com.github.copilot/agents/orderdesk-migrator.agent.md) | Coordinate stages, workspace boundaries, approvals, and recovery. |
-| [target-architecture](modernization-plugins/plugins/orderdesk-migrator/skills/target-architecture/SKILL.md) | Define destination rules, not facts about the source API. |
-| [assess-dotnet-api](modernization-plugins/plugins/orderdesk-migrator/skills/assess-dotnet-api/SKILL.md) | Discover source and live HTTP behavior; assemble the assessment. |
-| [baseline-tests](modernization-plugins/plugins/orderdesk-migrator/skills/baseline-tests/SKILL.md) | Bootstrap the harness, guide case authoring, run, seal, and recheck. |
-| [plan-cross-language-migration](modernization-plugins/plugins/orderdesk-migrator/skills/plan-cross-language-migration/SKILL.md) | Produce the plan, then tasks after plan approval. |
-| [dotnet-to-fastapi](modernization-plugins/plugins/orderdesk-migrator/skills/dotnet-to-fastapi/SKILL.md) | Implement approved tasks; verify the unchanged contract. |
+| Component | Type | Responsibility |
+| --- | --- | --- |
+| [orderdesk-migrator agent](modernization-plugins/plugins/orderdesk-migrator/com.github.copilot/agents/orderdesk-migrator.agent.md) | Agent | Coordinate stages, workspace boundaries, approvals, and recovery. |
+| [target-architecture](modernization-plugins/plugins/orderdesk-migrator/skills/target-architecture/SKILL.md) | Skill | Define destination rules, not facts about the source API. |
+| [assess-dotnet-api](modernization-plugins/plugins/orderdesk-migrator/skills/assess-dotnet-api/SKILL.md) | Skill | Discover source and live HTTP behavior; assemble the assessment. |
+| [baseline-tests](modernization-plugins/plugins/orderdesk-migrator/skills/baseline-tests/SKILL.md) | Skill | Bootstrap the harness, guide case authoring, run, seal, and recheck. |
+| [plan-cross-language-migration](modernization-plugins/plugins/orderdesk-migrator/skills/plan-cross-language-migration/SKILL.md) | Skill | Produce the plan, then tasks after plan approval. |
+| [dotnet-to-fastapi](modernization-plugins/plugins/orderdesk-migrator/skills/dotnet-to-fastapi/SKILL.md) | Skill | Implement approved tasks; verify the unchanged contract. |
 
 ### Workflow and approval gates
 
