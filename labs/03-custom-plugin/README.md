@@ -10,7 +10,7 @@ Unlike a .NET version upgrade, this exercise translates models, business logic, 
 
 | Tool | Why / installation |
 | --- | --- |
-| Git and VS Code | Open your workshop checkout. [VS Code installation](https://code.visualstudio.com/docs/setup/windows). |
+| Git and VS Code | Keep this workshop checkout for the plugin and clone the separate application repository. [VS Code installation](https://code.visualstudio.com/docs/setup/windows). |
 | GitHub Copilot access in VS Code | Sign in and use the **Copilot** harness. [Copilot setup](https://code.visualstudio.com/docs/copilot/setup). |
 | Agent plugin support | Use a VS Code version supporting Agent Plugins 1.0. See [plugin installation](https://code.visualstudio.com/docs/agent-customization/agent-plugins). |
 | .NET Framework 4.8 runtime and Developer Pack | Run and compile the legacy Windows application. [Developer Pack](https://dotnet.microsoft.com/en-us/download/dotnet-framework/net48). |
@@ -21,23 +21,33 @@ Unlike a .NET version upgrade, this exercise translates models, business logic, 
 
 Initial restores need access to NuGet and the configured Python package feed. You do not need IIS, SQL Server, a separate NuGet CLI, or an Azure subscription.
 
-## 1. Open the two sides
+## 1. Clone the application and locate the plugin
 
-These sibling folders represent separate repositories; the workshop does not create or publish repositories:
+Use the real application repository separately from this workshop's plugin source:
 
-| Folder | Role |
+| Location | Role |
 | --- | --- |
-| [your-app](your-app/README.md) | Original application: source and ordinary .NET build/run documentation |
-| [modernization-plugins](modernization-plugins/README.md) | Shared plugin: destination guidance, discovery workflow, and generic verification scaffolding |
-| `facilitator` (optional, local only) | Maintainer reference verification; ignored by Git and not distributed with the lab |
+| [rmoreirao/orderdesk-dotnet48](https://github.com/rmoreirao/orderdesk-dotnet48) | Original application repository: source and ordinary .NET build/run documentation |
+| [modernization-plugins](modernization-plugins/README.md) in this workshop | Shared plugin source: destination guidance, discovery workflow, and generic verification scaffolding |
 
-Open **your-app** as the application workspace, not the outer workshop root. You may inspect the plugin in a separate window. Do not supply facilitator tests, an earlier rehearsal, or a previous target answer to the application chat.
+From the **workshop repository root**, clone a fresh application checkout beside it and open that checkout:
+
+```powershell
+$workshopRoot = (Get-Location).Path
+$appRoot = Join-Path (Split-Path -Parent $workshopRoot) 'orderdesk-dotnet48-lab3'
+if (Test-Path -LiteralPath $appRoot) { throw 'Choose a new application folder; do not overwrite or reuse an earlier run.' }
+git clone https://github.com/rmoreirao/orderdesk-dotnet48.git $appRoot
+if ($LASTEXITCODE -ne 0) { throw 'Application clone failed.' }
+code $appRoot
+```
+
+Open only the **cloned application folder** as the application workspace, not the workshop root or a combined workspace. Keep the workshop checkout available for plugin installation; you may inspect it in a separate window. All following application build/run commands and chat requests belong in the application's VS Code window. Do not supply reference tests, an earlier rehearsal, or a previous target answer to the application chat.
 
 The application's own README describes only its current operation. No characterization contract, baseline project, target launcher, or upgrade report is prepopulated there.
 
 ## 2. Build and explore the original application
 
-Follow the application's .NET-only instructions:
+In a terminal rooted at the cloned application, follow its [.NET-only README](https://github.com/rmoreirao/orderdesk-dotnet48/blob/main/README.md):
 
 ```powershell
 .\scripts\Build-Legacy.ps1
@@ -52,7 +62,7 @@ In another terminal, try `GET http://localhost:5088/api/products`. Stop your man
 
 1. In the application window, choose the **Copilot** harness.
 2. Run **Chat: Install Plugin from Source** from the Command Palette.
-3. Enter the absolute path to your checkout's `labs\03-custom-plugin\modernization-plugins\plugins\orderdesk-migrator` folder.
+3. Enter the absolute path to the **workshop checkout's** `labs\03-custom-plugin\modernization-plugins\plugins\orderdesk-migrator` folder, not a path inside the cloned application. In a terminal at the workshop repository root, `(Resolve-Path .\labs\03-custom-plugin\modernization-plugins\plugins\orderdesk-migrator).Path` prints that path.
 4. Review the local package and any trust/installation prompt before confirming.
 5. Run **Chat: Open Customizations**, open **Plugins**, and confirm **orderdesk-migrator 1.1.0** is installed/enabled in the intended context.
 6. Inspect its agent and five skills. In a fresh application chat, use **Add Context (+) > Agent...** (or the current agent-name button) to select **orderdesk-migrator**.
@@ -144,7 +154,7 @@ Read `baseline-report.md`, actual TRX, and `tasks.md` for real Before/After comm
 
 The target comparison must work with C# stopped. Confirm that assertions did not change between hosts, Python genuinely implements the behavior, and runtime/OpenAPI checks describe the responses actually sent.
 
-An instructor maintaining separate reference tests can run them independently. Local facilitator material is ignored by Git, is not required for this lab, and must not be supplied to the learner agent. The generated suite does not need to reproduce a predetermined case count.
+No instructor reference suite is supplied or required. Review the generated cases against the observed application behavior; the suite does not need to reproduce a predetermined case count.
 
 **Finish when:** both hosts pass the same reviewed frozen expectations, covered files/hashes and actual identities match, and evidence is recorded. Focused characterization does not prove exhaustive compatibility or production readiness.
 
@@ -154,16 +164,16 @@ An instructor maintaining separate reference tests can run them independently. L
 - **Port occupied:** stop the specific host you started, not every Python/.NET process. The generated fixture must not reuse or kill an unrelated listener.
 - **OWIN access denied:** an administrator may need a URL reservation for exactly `http://localhost:5088/` and your Windows account. Review that setup with them; do not grant wildcard URLs or Everyone access. The lab does not modify reservations automatically.
 - **Python environment absent:** execution must generate its package, pinned `requirements.txt`, and `.venv`; the starter intentionally contains no answer.
-- **Contract or harness absent before assessment:** this is expected. Verify plugin 1.1.0 and let its baseline skill initialize infrastructure and author cases from actual discovery. Do not copy facilitator cases into the application.
+- **Contract or harness absent before assessment:** this is expected. Verify plugin 1.1.0 and let its baseline skill initialize infrastructure and author cases from actual discovery. Do not copy cases from another run into the application.
 - **Initializer finds existing files:** inspect them and resume only if valid; do not overwrite unrelated tests or reset the application.
-- **Updating an older checkout:** ignored `tests\baseline` build/result directories can remain after the supplied suite is relocated. Preserve those leftovers outside the application or use a fresh checkout before initializing; do not copy reference cases back into the starter.
+- **Reusing an earlier application checkout:** generated `tests\baseline`, upgrade evidence, or target files mean it is not a clean start. Preserve that work and clone into a different fresh folder for this exercise; do not overwrite an existing suite or reuse its approvals.
 - **Python package pin unavailable:** a configured mirror can lag public releases. Resolve compatible published versions available through the approved feed and update the generated pins before installing; do not silently change package-index settings.
 - **Baseline changed:** inspect the diff and fix the migration. Do not re-freeze to hide a failing port.
 
 Approval markers and hashes are review guardrails/tamper detection, not security enforcement. Follow normal tool/trust approvals.
 
-**Rehearsal status:** Installed plugin 1.1.0 completed a source-only migration in a fresh SDK-agent context, with coordinator review at the assessment/baseline, plan, and task/execution gates. The agent generated its own 15-case characterization; the same frozen cases passed against .NET and the independent Python target. Separately, the preserved facilitator suite passed all 42 cases against each new host without supplying its expectations to the migration agent. The generated answer and reports remain outside the shipped starter.
+**Rehearsal status:** The revised separate-repository setup is awaiting its fresh SDK-agent rehearsal. Earlier source-copy results do not establish that the clone-based instructions work end-to-end.
 
-**Verification boundary:** Native VS Code 1.1.0 installation and agent discovery were verified, but a full native chat/approval-UI rehearsal was not executed. The SDK run is a separate verification channel, not a claim of human/native approval. The earlier 1.0.1 prepared-baseline rehearsal is not used as evidence for this revised workflow.
+**Verification boundary:** The automated rehearsal uses SDK-agent execution and coordinator review at each stage, not human interaction with native VS Code chat/approval UI. The participant workflow remains VS Code. No independent reference suite is included in this verification.
 
 **References:** [Plugin authoring](https://code.visualstudio.com/docs/agents/reference/agent-plugin-reference), [FastAPI validation/errors](https://fastapi.tiangolo.com/tutorial/handling-errors/), [Pydantic Decimal serialization](https://docs.pydantic.dev/latest/api/standard_library_types/), and [simplejson decimal support](https://simplejson.readthedocs.io/en/latest/).
