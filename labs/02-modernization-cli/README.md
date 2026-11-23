@@ -2,7 +2,9 @@
 
 Use the **GitHub Copilot Modernization Agent** to upgrade the same [OrderDesk API](https://github.com/rmoreirao/orderdesk-dotnet48) as Lab 1, this time from the terminal. Follow its **Assess > Plan > Execute** workflow, review the generated plan, and build and test the upgraded code.
 
-**Scope:** Upgrade Web API 2 with OWIN self-hosting on .NET Framework 4.8 to a controller-based ASP.NET Core API on .NET 10. Keep the work local: build and in-memory unit tests only, with no API startup, HTTP requests, database connections, Azure migration, resource provisioning, or deployment.
+**Workshop scope:** Upgrade Web API 2 with OWIN self-hosting on .NET Framework 4.8 to a controller-based ASP.NET Core API on .NET 10. This is a disposable training copy with no production or external consumers: upgrade in place and retain the basic product, order, stock, and cancellation behavior. Exact legacy HTTP compatibility, an HTTP baseline, a parallel API host, a proxy, and production cutover are out of scope.
+
+**Local only:** Build and run in-memory unit tests; don't start the API or send requests to it, connect to a database, migrate to Azure, provision resources, or deploy. Package restore and read-only NuGet/package-analysis and documentation lookups are allowed.
 
 ## Prerequisites and installation
 
@@ -114,18 +116,22 @@ The menu images above are generic interface examples, not results from an OrderD
 5. Replace the default modernization goal with:
 
    ```text
+   This is a disposable workshop copy with no production or external consumers.
    Upgrade src\OrderDesk.Legacy\OrderDesk.Legacy.csproj from .NET Framework 4.8
    to a controller-based ASP.NET Core API on .NET 10, keeping its current path.
-   Preserve GET /api/products, POST /api/orders, GET /api/orders/{id}, and
-   POST /api/orders/{id}/cancel, including status codes, the created order's
-   location, error bodies, camel-case JSON, and single shared in-memory inventory.
+   Upgrade in place and retain the basic product, order, stock, and cancellation
+   behavior in memory. There is no strict HTTP wire/backward-compatibility
+   requirement. Do not add an HTTP baseline, parallel API host, proxy, or cutover.
    Add focused in-memory tests in tests\OrderDesk.Tests\OrderDesk.Tests.csproj.
    Verify that two units of product 1 at 19.95 each total 39.90 and reduce stock
    by two, and that cancelling twice restores stock only once.
-   Give each test a fresh store; if the private constructor and singleton prevent
-   isolation, make only the smallest behavior-preserving testability change.
-   Build and run the unit tests only. Do not start the API, make HTTP requests,
-   connect to a database, migrate to Azure, provision resources, or deploy.
+   Give each test a fresh store. If needed, allow independent construction
+   while keeping the API's shared instance. Prefer a small constructor change
+   over a new testability abstraction.
+   Build and run the unit tests only. Do not start the API or send requests to
+   it, connect to a database, migrate to Azure, provision resources, or deploy.
+   Package restore and read-only NuGet/package-analysis and documentation
+   lookups are allowed.
    ```
 
    The default goal includes migrating to Azure. Don't accept that default for this lab.
@@ -138,6 +144,7 @@ The menu images above are generic interface examples, not results from an OrderD
    | Application model | Controller-based ASP.NET Core API |
    | Target framework | .NET 10 |
    | Upgrade approach | In-place |
+   | Compatibility expectations | Disposable training copy; no external consumers or strict HTTP compatibility guarantee |
    | Azure services, infrastructure, or deployment | No |
    | Validation | Build and isolated in-memory order creation/cancellation tests; don't start the API |
 
@@ -152,17 +159,17 @@ The menu images above are generic interface examples, not results from an OrderD
 1. Open `.github\modernize\orderdesk-dotnet10\plan.md` in a text editor.
 2. Find a **controller-based ASP.NET Core API on .NET 10** as the target, keeping `src\OrderDesk.Legacy\OrderDesk.Legacy.csproj` as the API project.
 3. Look for the migration work that addresses your source-backed upgrade concern: replace Web API 2 and OWIN hosting with ASP.NET Core, and convert the project and package references to SDK style.
-4. Check that the plan preserves the four API routes, camel-case JSON, error messages, and status codes. Order creation must keep **201 Created** and its location; invalid orders, missing resources, and insufficient stock must retain **400**, **404**, and **409** responses.
-5. Find the isolated in-memory order tests, their test-project path, and build validation. Testability changes must preserve the application's single shared inventory rather than creating a different store for every request.
+4. Check that the API still browses products, creates and reads orders, and cancels them using shared in-memory stock. Exact old payloads, headers, and error formatting aren't acceptance criteria for this training copy.
+5. Find the isolated in-memory order tests, their test-project path, and build validation. If test isolation needs a change, prefer allowing a fresh store instance over introducing new abstractions; keep the API's shared inventory.
 6. Open the task file linked by the CLI in the same plan folder to see execution tasks and dependencies. Its location can vary by version, for example `tasks.json` or `.metadata\tasks.json`. A dependency CVE-remediation task may also appear.
-7. If the plan contains Azure migration, resource provisioning, deployment, database access, API startup, or HTTP checks, have the agent revise it before approving.
+7. If the plan contains Azure migration, resource provisioning, deployment, database access, API startup, an HTTP baseline, a parallel API host, a proxy, or production cutover, have the agent revise it before approving. Restate the workshop scope if compatibility questions arise; don't bypass tool approvals.
 
 Use these as review criteria, not as output from a recorded run:
 
 | In the plan | What to check |
 | --- | --- |
 | API migration | ASP.NET Core replaces the legacy host and controllers without adding a UI or changing languages. |
-| Order creation test | Calling production `OrderStore` with product 1 and quantity 2 gives total `39.90m` at unit price `19.95m`, with stock reduced by 2. |
+| Order creation test | Calling the application's `OrderStore` with product 1 and quantity 2 gives total `39.90m` at unit price `19.95m`, with stock reduced by 2. |
 | Repeated cancellation test | Cancelling restores the ordered quantity once; a second cancellation leaves stock unchanged and status remains `"cancelled"`. |
 | Validation | Build the upgraded project and discover and run the unit tests without a server or database. |
 
@@ -198,8 +205,8 @@ Use these as review criteria, not as output from a recorded run:
 4. Check that each test gets isolated state. Don't rely on test ordering or leftover singleton state; any testability change must preserve the API's single shared inventory.
 5. Read the build and test results. The build must succeed, and the test runner must discover and pass the order creation and cancellation tests.
 
-These are expected outcomes, not recorded successful OrderDesk rehearsal results: the 1.0.95 run stopped during planning. Zero tests discovered is not a passing test.
+The simplified workshop scope has not yet been rehearsed end-to-end; the earlier 1.0.95 run stopped during planning. Zero tests discovered is not a passing test.
 
-**Finish when:** The upgraded code builds and the focused unit tests pass without starting the API, making HTTP requests, or connecting to a database. These checks don't prove HTTP compatibility or that the whole API works at runtime. Keep your changes local.
+**Finish when:** The upgraded code builds and the focused unit tests pass without starting the API, sending requests to it, or connecting to a database. These checks cover the exercise, not full runtime compatibility or production readiness. Keep your changes local.
 
 **References:** [Modernization Agent overview](https://learn.microsoft.com/en-us/azure/developer/github-copilot-app-modernization/modernization-agent/overview), [interactive quickstart](https://learn.microsoft.com/en-us/azure/developer/github-copilot-app-modernization/modernization-agent/quickstart), and [image credits](../../images/lab-2/ATTRIBUTION.txt).

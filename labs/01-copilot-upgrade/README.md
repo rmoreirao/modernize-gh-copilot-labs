@@ -4,9 +4,9 @@ Use the **GitHub Copilot desktop app** to upgrade [OrderDesk](https://github.com
 
 You'll follow the agent through assessment, planning, and execution in the **Code Upgrade** dashboard, then build and test the upgraded code.
 
-**Scope:** Keep everything local. Build and run in-memory unit tests only; don't start the API or send requests to it, connect to a database, provision Azure resources, or deploy anything. Package restore and read-only NuGet/package-analysis and documentation lookups are allowed.
+**Workshop scope:** This is a disposable training copy with no production or external consumers. Upgrade it in place and retain the basic product, order, stock, and cancellation behavior. Exact legacy HTTP payloads, headers, error formatting, and existing-client compatibility are not acceptance criteria. No HTTP baseline, parallel API host, proxy, or traffic cutover is required.
 
-**Rehearsal status:** The starter build, assessment, and plan generation completed using the standalone Copilot CLI substitute, with CLI **1.0.115-7** and Upgrade **1.1.816**. Execution then failed before the first task: the Upgrade server couldn't launch its nested CLI (`InvalidOperationException`, HRESULT `0x80131509`). A verified executable and an explicit `COPILOT_CLI_PATH` in a fresh process did not resolve it. No upgraded build or unit-test result was produced. Desktop setup, dashboard, and agent-picker interactions remain unverified.
+**Local only:** Build and run in-memory unit tests; don't start the API or send requests to it, connect to a database, provision Azure resources, or deploy anything. Package restore and read-only NuGet/package-analysis and documentation lookups are allowed.
 
 ## Prerequisites and installation
 
@@ -51,11 +51,13 @@ The starter contains `src\OrderDesk.Legacy\OrderDesk.Legacy.csproj`, not a solut
 1. Paste this in the prompt box and send it:
 
    ```text
+   This is a disposable workshop copy with no production or external consumers.
    Upgrade src\OrderDesk.Legacy\OrderDesk.Legacy.csproj from .NET Framework 4.8
-   to a controller-based ASP.NET Core API on .NET 10 in Guided mode and show
-   the dashboard. Keep the project at its current path. Preserve the existing
-   product, order, and cancellation routes, HTTP status codes, error bodies,
-   camel-case JSON, and in-memory inventory behavior.
+   to a controller-based ASP.NET Core API on .NET 10 in place, in Guided mode,
+   and show the dashboard. Keep the project at its current path and retain
+   the basic product, order, stock, and cancellation behavior in memory.
+   There is no strict HTTP wire/backward-compatibility requirement.
+   Do not add an HTTP baseline, parallel API host, proxy, or production cutover.
    Keep the work local: build only during the upgrade. Do not start the API
    or send requests to it, connect to a database, provision resources, or deploy.
    Package restore and read-only NuGet/package-analysis and documentation
@@ -70,6 +72,7 @@ The starter contains `src\OrderDesk.Legacy\OrderDesk.Legacy.csproj`, not a solut
    | Target version | .NET 10 |
    | Flow mode | Guided |
    | Git workspace | Keep the work in the current local worktree |
+   | Compatibility expectations | Disposable training copy; no external consumers or strict HTTP compatibility guarantee |
    | Tests before the upgrade | Skip baseline tests; the starter has none. You'll add focused unit tests later. |
 
 3. Open the **Code Upgrade** side panel. If it didn't open automatically, send `Show the upgrade dashboard.`
@@ -104,7 +107,7 @@ The starter contains `src\OrderDesk.Legacy\OrderDesk.Legacy.csproj`, not a solut
 ### Step 4 - Answer the upgrade questions and review the plan
 
 1. Return to the same **Upgrade** chat.
-2. Review the upgrade options the agent presents. Choose **in-place** if it asks how to port the project. Choose a **controller-based ASP.NET Core API**, preserving the existing API rather than adding a UI or changing languages.
+2. Review the upgrade options the agent presents. Choose **in-place** if it asks how to port the project. Choose a **controller-based ASP.NET Core API**, keeping it a small API rather than adding a UI or changing languages.
 3. Confirm when the agent asks to proceed to planning. It creates the plan from the assessment and your answers; you don't need a separate plan-generation prompt.
 4. When the plan is ready, select **Plan** in the dashboard. If that view isn't available, open the `plan.md` file linked in the agent's response.
 5. Find the target, the response to your assessment finding, and the build step.
@@ -115,13 +118,13 @@ Use this example to understand what to look for. It illustrates plan content, no
 | --- | --- |
 | Controller-based ASP.NET Core API on .NET 10 | Copilot is upgrading the existing API, not adding a UI or replacing it with another application. |
 | Replace Web API 2 and OWIN hosting with ASP.NET Core | The plan addresses the `System.Web.Http` and hosting finding you reviewed. |
-| Convert the project and package references to SDK style on net48 first | The generated plan separated structural conversion from the later .NET 10 API migration, preserving behavior at each step. |
-| Preserve the HTTP contract and inventory behavior | Existing routes, response bodies, status codes, and order/cancellation semantics remain intact. |
+| Convert the project and package references to SDK style | The plan addresses the old project format and `packages.config`; it may separate this from retargeting. |
+| Retain the product/order business behavior | The API still browses products, creates and reads orders, and cancels them using shared in-memory inventory. |
 | Build the upgraded project | The plan includes a way to check the code compiles without starting a server. |
 
-Check that the contract covers `GET /api/products`, `POST /api/orders`, `GET /api/orders/{id}`, and `POST /api/orders/{id}/cancel`. Creating an order must still return **201 Created** with its location; invalid orders, missing resources, and insufficient stock must retain their **400**, **404**, and **409** responses and error messages. Keep camel-case JSON and the single shared, in-memory inventory.
+Check the business goals: correct order totals, stock reduction when an order is placed, and stock restoration only once when an order is cancelled repeatedly. Exact old JSON shapes, response headers, and framework-generated errors aren't part of this exercise.
 
-**Before you approve:** Ask Copilot to revise a missing item. Remove any proposed API launch, HTTP API check, database connection, resource provisioning, or deployment. Read the updated plan before moving on.
+**Before you approve:** Keep the plan small. Remove any proposed API launch, HTTP baseline, parallel API host, proxy, production cutover, database connection, resource provisioning, or deployment. If compatibility questions arise, restate the disposable-workshop scope rather than accepting a production preservation plan or bypassing tool approvals. Read the updated plan before moving on.
 
 **Continue when:** You've reviewed the plan and are ready for Copilot to change the code.
 
@@ -148,7 +151,7 @@ Check that the contract covers `GET /api/products`, `POST /api/orders`, `GET /ap
 4. When the upgrade finishes, select **Changes** in the app and open the diff for `src\OrderDesk.Legacy\OrderDesk.Legacy.csproj`.
 5. Look for `Microsoft.NET.Sdk.Web` and `<TargetFramework>net10.0</TargetFramework>` in the upgraded project.
 
-If the first task reports that the **nested Copilot CLI could not be started**, stop here. Follow the tool's host-runtime diagnostics and verify its `COPILOT_CLI_PATH` before retrying in a fresh session. The rehearsal reproduced the failure even with a valid path, so don't assume installing or locating an executable alone fixes it. Don't manually port the application and count that as successful Upgrade execution.
+If the **nested Copilot CLI cannot start**, resolve the tooling error before continuing; it isn't a reason to redesign OrderDesk. An earlier CLI-only rehearsal required a protocol-compatible CLI/Upgrade SDK pairing. That recovery is not an additional desktop-app prerequisite or a verified desktop workaround.
 
 **Continue when:** The upgrade tasks are complete and the API project targets .NET 10. If the agent is waiting for an answer, respond in the same chat. If a task fails, read the error and ask Copilot to address it before moving to validation.
 
@@ -158,14 +161,14 @@ If the first task reports that the **nested Copilot CLI could not be started**, 
 2. Send:
 
    ```text
-   Add focused in-memory unit tests for the upgraded production OrderStore
+   Add focused in-memory unit tests for the upgraded application's OrderStore
    in tests\OrderDesk.Tests\OrderDesk.Tests.csproj.
    Check that ordering two units of product 1 at 19.95 each totals 39.90
    and reduces stock by two. Check that cancelling an order twice leaves it
    cancelled and restores its stock only once.
-   Give each test a fresh store. The starter has a private constructor and
-   a singleton; if needed, make only the smallest behavior-preserving change
-   for test isolation, retaining the API's single shared inventory.
+   Give each test a fresh store. If needed, allow independent construction
+   while keeping the API's shared instance. Prefer a small constructor change
+   over a new testability abstraction.
    Build the API project and run the tests. Do not start the API or send
    requests to it, connect to a database, or deploy anything.
    Package restore and read-only NuGet/package-analysis and documentation
@@ -188,8 +191,8 @@ If the first task reports that the **nested Copilot CLI could not be started**, 
 | Build | The upgraded API and test project built with no errors. |
 | Tests | The runner discovered the order creation and cancellation tests and reported them passed. |
 
-These are expected results: the recorded CLI rehearsal stopped before upgrade execution and did not reach this test stage. Zero tests discovered is not a passing test.
+The simplified workshop scope has not yet been rehearsed end-to-end. Earlier runs reached assessment/planning but did not complete conversion or this test stage. Zero tests discovered is not a passing test.
 
-**Finish when:** Your upgraded code builds and the new tests pass without starting the API. If either fails, have the agent fix it and rerun the check. A clean build and these focused unit tests don't prove HTTP compatibility or that the whole API works at runtime.
+**Finish when:** Your upgraded code builds and the new tests pass without starting the API. If either fails, have the agent fix it and rerun the check. These checks cover the exercise, not full runtime compatibility or production readiness.
 
 **References:** Microsoft Learn's [.NET upgrade walkthrough](https://learn.microsoft.com/en-us/dotnet/core/porting/github-copilot-upgrade/dotnet-how-to-upgrade-with-github-copilot) and [dashboard guide](https://learn.microsoft.com/en-us/dotnet/core/porting/github-copilot-upgrade/dashboard). [Image credits](../../images/lab-1/ATTRIBUTION.txt).
