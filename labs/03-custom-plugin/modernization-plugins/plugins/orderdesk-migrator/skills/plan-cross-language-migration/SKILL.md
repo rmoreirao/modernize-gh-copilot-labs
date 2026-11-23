@@ -5,7 +5,7 @@ description: Convert an approved C# API assessment into a Python migration plan,
 
 # Plan, then tasks
 
-Read `assessment.md`, the source evidence, `target-architecture`, the contract, and actual baseline report. Establish explicit user approval of the current assessment before writing a plan.
+Read `assessment.md`, source evidence, `target-architecture`, the generated current-state contract/cases, and actual Before report. Establish explicit approval of the current assessment AND baseline. Use `baseline-tests` to seal that reviewed passing set before writing a plan; verify an existing freeze rather than overwriting it.
 
 ## Plan stage
 
@@ -14,11 +14,11 @@ Write `.github\upgrades\dotnet-to-fastapi\plan.md` from [the plan template](temp
 Include:
 
 - Python interpreter, local environment, verified/pinned dependency approach, package layout, and startup command.
-- DTO aliases and integer bounds/coercion.
-- Decimal math, exact numeric JSON output, validated models, and truthful OpenAPI.
-- Four routes, statuses, errors and Location semantics, including the FastAPI validation adapter.
-- Shared store lifetime, lock scope, independent order IDs, and idempotent cancellation.
-- The unchanged baseline command, source-integrity checks, and independent-host comparison.
+- Applicable public-name mappings and observed integer bounds/coercion.
+- Observed numeric precision/JSON types, validated outputs, and truthful OpenAPI.
+- Discovered routes, statuses, error shapes and headers; validation adapters only where required by characterization.
+- Observed state lifetime, concurrency boundaries, identity, mutations, and repeated-operation behavior.
+- The generic Before/After launch configuration, approved baseline identities/hash set, and independent-host comparison.
 - Preserving the legacy starter and keeping generated source in the application root.
 
 Do not create Python source, its dependency manifest, or executable tasks yet. Leave status Draft and stop for plan approval.
@@ -27,7 +27,7 @@ Do not create Python source, its dependency manifest, or executable tasks yet. L
 
 Only after explicit approval of the current plan, write `tasks.md` from [the task template](templates/tasks.md). Keep a small list of coherent tasks, not a task per line of code.
 
-Each task needs an ID, prerequisites, affected files, pending status, concrete acceptance criteria, and a validation command/result field. Suggested grouping: environment/package; models/store; HTTP/serialization/error adapters; Python checks; unchanged baseline comparison.
+Each task needs an ID, prerequisites, affected files, pending status, concrete acceptance criteria, and a validation command/result field. Suggested grouping: environment/package and target ignore rules; models/business state; HTTP/serialization/error adapters; Python checks; unchanged baseline comparison. Do not regenerate or replace the approved characterization as an implementation task.
 
 Dependencies must reflect actual prerequisites. Do not execute while producing the task breakdown. Leave it Draft and stop for explicit task/execution approval.
 

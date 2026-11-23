@@ -6,6 +6,6 @@ Welcome to the workshop! Three labs, one goal: make legacy code a little less le
 | --- | --- |
 | [01 - GitHub Copilot upgrade](labs/01-copilot-upgrade/README.md) | Work through an upgrade of an existing .NET project. |
 | [02 - Modernization CLI](labs/02-modernization-cli/README.md) | Take application modernization to the terminal. |
-| [03 - Custom modernization plugin](labs/03-custom-plugin/README.md) | Port a C# API to Python/FastAPI with a reusable agent, skills, and unchanged HTTP tests. |
+| [03 - Custom modernization plugin](labs/03-custom-plugin/README.md) | Discover a C# API, generate reviewed HTTP characterization, and port it to Python/FastAPI with an agent and skills. |
 
-**Lab 3 starter:** Includes a legacy API, independent HTTP baseline, and custom plugin. Its Python implementation is generated during the exercise.
+**Lab 3 starter:** An ordinary .NET Framework API and a complete custom plugin. The agent generates characterization and the Python implementation during the exercise; facilitator verification is separate.

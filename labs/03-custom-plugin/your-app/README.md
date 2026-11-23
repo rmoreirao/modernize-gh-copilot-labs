@@ -1,65 +1,39 @@
-# Application repository
+# OrderDesk API
 
-OrderDesk is a small Windows-hosted **C# / .NET Framework 4.8 Web API 2** starter. The migration creates an independent **Python / FastAPI** implementation while preserving its HTTP contract.
+OrderDesk is a Windows-hosted C# / .NET Framework 4.8 Web API 2 application for browsing products, placing single-product orders, and cancelling orders.
 
-```text
-your-app\
-  global.json
-  src\OrderDesk.Legacy\
-  tests\baseline\
-    contract.md
-    OrderDesk.Baseline.Tests.csproj
-  scripts\
-    Build-Legacy.ps1
-    Test-Baseline.ps1
-```
+## Requirements
 
-## Run from this folder
+- Windows with the .NET Framework 4.8 runtime and Developer Pack.
+- Visual Studio or Build Tools with MSBuild and the .NET desktop build tools.
+- Access to NuGet for the packages listed in `src\OrderDesk.Legacy\packages.config`.
 
-See the [lab prerequisites and walkthrough](../README.md). In a terminal whose working directory is `your-app`:
+The application is a console executable using OWIN self-hosting. It does not require IIS or a database.
 
-```powershell
-.\scripts\Test-Baseline.ps1 -Target Legacy -Freeze
-```
+## Build and run
 
-The helper restores/builds the classic project with Visual Studio MSBuild, runs the .NET 10 HTTP tests against real external hosts, validates the TRX result, and records the baseline. It starts fresh seeded state for each scenario and stops only its own processes. Omit `-Freeze` on subsequent runs with an existing freeze.
-
-To inspect the API manually:
+Run these PowerShell commands from this folder:
 
 ```powershell
 .\scripts\Build-Legacy.ps1
 .\src\OrderDesk.Legacy\bin\Debug\OrderDesk.Legacy.exe --url http://localhost:5088/
 ```
 
-Then call `GET http://localhost:5088/api/products`. Stop that host with Ctrl+C before running the baseline again; the suite needs its port.
+The build helper locates Visual Studio MSBuild and restores the project's packages. The service listens on localhost; use `--url` to select another local address.
 
-## After the approved migration
-
-The agent generates:
-
-```text
-your-app\
-  requirements.txt
-  .venv\
-  src\orderdesk_python\
-  .github\upgrades\dotnet-to-fastapi\
-    assessment.md
-    plan.md
-    tasks.md
-    baseline-report.md
-    baseline-files.json
-```
-
-Run the same test files against Python:
+In a second terminal, browse the catalog:
 
 ```powershell
-.\scripts\Test-Baseline.ps1 -Target Python
+Invoke-RestMethod -Uri http://localhost:5088/api/products
 ```
 
-The target must expose `orderdesk_python.app:app` in `src`, use `.venv\Scripts\python.exe`, and run as one Uvicorn worker on localhost:5089. The Python API must work without the C# host.
+Place an order:
 
-The baseline remains a .NET 10 `HttpClient` suite with no application-assembly references. Moving both the implementation and its oracle at once would make regressions harder to detect. Python alone runs the migrated service; .NET remains a workshop verification tool.
+```powershell
+Invoke-RestMethod -Method Post -Uri http://localhost:5088/api/orders `
+    -ContentType application/json -Body '{"productId":1,"quantity":2}'
+```
 
-Review actual reports and diffs. Keep the baseline file set unchanged, including the [contract](tests/baseline/contract.md). Never change assertions or refresh hashes to hide a failed port. Neither hashes nor approval markers prevent tampering; they support independent review.
+Read or cancel the returned order using `GET /api/orders/{id}` or `POST /api/orders/{id}/cancel`.
 
-The starter intentionally has no Python answer or approved migration artifacts. It uses no database, authentication, customer data, deployment, or persistent multi-worker storage.
+Stop the service with Ctrl+C. Product stock and orders are held in memory; restarting the process restores the initial catalog and clears orders.

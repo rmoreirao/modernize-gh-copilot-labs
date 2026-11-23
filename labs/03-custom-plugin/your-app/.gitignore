@@ -2,6 +2,3 @@
 **/obj/
 packages/
 TestResults/
-.venv/
-**/__pycache__/
-*.pyc

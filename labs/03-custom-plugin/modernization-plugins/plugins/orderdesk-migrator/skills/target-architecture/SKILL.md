@@ -1,11 +1,11 @@
 ---
 name: target-architecture
-description: Establish the approved Python FastAPI target and wire-contract rules before assessing or executing the OrderDesk C# API migration.
+description: Define Python FastAPI destination guidance while deriving preservation requirements from the assessed source application.
 ---
 
 # Target architecture
 
-Read the application-owned `tests\baseline\contract.md` and the C# source. This skill defines the destination; it does not authorize implementation.
+This skill defines the destination, not facts about the source. Begin with the user's target and the actual .NET application. A characterization contract need not exist yet; `assess-dotnet-api` and `baseline-tests` create it from evidence.
 
 ## Destination
 
@@ -19,15 +19,15 @@ Implement models and business logic in Python. Do not call a CLR, spawn the C# h
 
 ## Preserve the public contract
 
-Keep endpoint paths/verbs, camelCase JSON, statuses, Location paths, seeded data, order identity, reservation, and cancellation behavior. Python internals may use snake_case with explicit Pydantic wire aliases.
+Preserve the paths, verbs, public JSON names/types, statuses, headers, initial state, and state transitions established by the reviewed characterization. Do not assume four routes, camelCase, a particular seed, order model, or cancellation behavior. Python internals may use snake_case with explicit wire aliases where needed.
 
-Preserve request integer bounds and the characterized legacy input rules, including parseable integer strings. Python's unbounded integers and Pydantic's coercion are not automatically equivalent to C# `int`.
+Preserve observed integer bounds/coercion. Python's unbounded integers and Pydantic defaults are not automatically equivalent to a C# field's declared type and actual binder. Accept integer strings only where source/HTTP characterization supports that behavior.
 
-FastAPI validation normally returns 422 and `detail`. Install a specific `RequestValidationError` handler returning the contract's 400/`message` response. Map known business failures to their specified statuses/messages. Do not broadly catch exceptions and return success; unexpected failures must remain visible and be logged.
+FastAPI validation normally returns 422 and `detail`. If that differs from the original's characterized errors, use a scoped `RequestValidationError` adapter preserving the observed status/body. Do not assume every original API returns 400/`message`. Map only known business failures; unexpected failures must remain visible and logged.
 
 ## Exact money, including its JSON type
 
-Use `Decimal` from strings, never binary floats, for catalog prices and all arithmetic. Default Pydantic JSON serialization turns decimals into strings; FastAPI encoding can also turn them into floats.
+Where the source uses exact decimal arithmetic and numeric JSON, preserve it with `Decimal` from strings, never binary floats. Default Pydantic JSON serialization turns decimals into strings; FastAPI encoding can also turn them into floats.
 
 Construct validated output models, dump them with `mode="python", by_alias=True`, and serialize retained `Decimal` values with `simplejson.dumps(..., use_decimal=True, allow_nan=False)`. Return a FastAPI/Starlette `Response` with `application/json` directly, avoiding `jsonable_encoder` or Pydantic JSON-mode preprocessing. One small response helper is enough.
 
@@ -37,6 +37,6 @@ Read the pinned framework's relevant documentation if behavior differs. Do not w
 
 ## Verification boundary
 
-The .NET 10 HTTP baseline is an independent external oracle and stays unchanged. Only the production implementation moves to Python. Run the same harness against each independently hosted version; Python must pass with the C# service stopped.
+The characterization suite is generated during assessment, run against .NET, reviewed, and frozen before translation. Thereafter its expectations stay unchanged. Run the same external HTTP harness against each independently hosted version; Python must pass with the C# service stopped. Do not read a facilitator reference suite as a substitute for discovery.
 
 No new business features, multiple order lines, database, authentication, UI, cloud resources, or deployment.

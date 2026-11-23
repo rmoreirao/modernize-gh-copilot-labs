@@ -1,6 +1,6 @@
 # OrderDesk migrator
 
-A packaged workshop workflow for a **C# / .NET Framework 4.8 Web API 2 to Python / FastAPI** port. This is not a .NET version upgrade.
+A packaged **1.1.0** workflow that starts from an ordinary C# / .NET Framework Web API 2 application and discovers its behavior before a Python/FastAPI port. No migration contract or harness must already exist in the application.
 
 Install this folder in VS Code using **Chat: Install Plugin from Source**. Use the **Copilot** harness, enable the plugin, and start a fresh chat in the OrderDesk application folder. Select **orderdesk-migrator** in the agent picker.
 
@@ -8,13 +8,15 @@ The agent uses five skills:
 
 | Skill | Purpose |
 | --- | --- |
-| target-architecture | Python target and compatibility rules |
-| assess-dotnet-api | Evidence-backed inventory of the legacy application |
-| baseline-tests | Execute and freeze the independent HTTP oracle |
+| target-architecture | Destination standards and cross-language pitfalls, not assumed source facts |
+| assess-dotnet-api | Source/HTTP discovery and a reviewable assessment/characterization bundle |
+| baseline-tests | Generic bootstrap, agent-authored cases, actual .NET results, reviewed freeze and recheck |
 | plan-cross-language-migration | Map C# behavior to Python and produce reviewable work |
 | dotnet-to-fastapi | Translate the API and verify the unchanged contract |
 
-It stops for separate assessment, plan, and task approvals. It never approves its own work. Baseline source hashes detect changes; neither hashes nor agent instructions are a security boundary.
+Assessment includes authoring a target-neutral behavioral contract and meaningful cases from the actual application. Generic resources under `skills\baseline-tests` contain no completed business tests. The agent must not obtain answers from sibling folders or previous runs.
+
+The workflow stops for assessment/baseline, plan, and task/execution approvals. A passing candidate baseline is sealed after review, before planning. Hashes detect later changes; neither markers nor instructions are security boundaries.
 
 The plugin includes no MCP servers, hooks, telemetry, cloud deployment, or automatic Git operations. Generated source and reports belong to the application workspace, not the installed plugin directory.
 

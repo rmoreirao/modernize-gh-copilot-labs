@@ -1,21 +1,25 @@
-# Lab 2: Modernize Contoso University with the Modernize CLI
+# Lab 2: Modernize OrderDesk with the Modernize CLI
 
-Use the **GitHub Copilot Modernization Agent** to upgrade the same Contoso University application as Lab 1, this time from the terminal. Follow its **Assess > Plan > Execute** workflow, review the generated plan, and build and test the upgraded code.
+Use the **GitHub Copilot Modernization Agent** to upgrade the same [OrderDesk API](https://github.com/rmoreirao/orderdesk-dotnet48) as Lab 1, this time from the terminal. Follow its **Assess > Plan > Execute** workflow, review the generated plan, and build and test the upgraded code.
 
-**Scope:** Upgrade ASP.NET MVC 5 on .NET Framework 4.8 to ASP.NET Core MVC on .NET 10. Keep the work local: no Azure migration, resource provisioning, deployment, or web app startup.
+**Scope:** Upgrade Web API 2 with OWIN self-hosting on .NET Framework 4.8 to a controller-based ASP.NET Core API on .NET 10. Keep the work local: build and in-memory unit tests only, with no API startup, HTTP requests, database connections, Azure migration, resource provisioning, or deployment.
 
 ## Prerequisites and installation
 
-Use a Windows machine and a GitHub account with Copilot access. You can reuse Git and the .NET SDK from Lab 1, but this lab doesn't require the desktop app or its Upgrade plugin.
+Use a Windows machine and a GitHub account with Copilot access. You can reuse Git, the SDK, and the legacy build tools from Lab 1, but this lab doesn't require the desktop app or its plugins.
 
 | Install | Official instructions |
 | --- | --- |
 | Git for Windows | [Install Git](https://git-scm.com/install/windows) |
 | GitHub CLI | [Install GitHub CLI](https://cli.github.com/) |
 | .NET 10 SDK | [Install .NET on Windows](https://learn.microsoft.com/en-us/dotnet/core/install/windows). Choose the SDK, not just the runtime. |
+| .NET Framework 4.8 runtime and Developer Pack | [Download .NET Framework 4.8](https://dotnet.microsoft.com/en-us/download/dotnet-framework/net48). Install the **Developer Pack** for the legacy reference assemblies. |
+| Visual Studio or Build Tools | [Visual Studio downloads](https://visualstudio.microsoft.com/downloads/). Install MSBuild and the **.NET desktop development** workload, or **.NET desktop build tools** for Build Tools. |
 | Modernize CLI | [Install the Modernization Agent](https://learn.microsoft.com/en-us/azure/developer/github-copilot-app-modernization/modernization-agent/quickstart#install-the-modernization-agent). Open a new terminal after installing it. |
 
-No Azure subscription, LocalDB, or MSMQ installation is needed.
+Allow access to NuGet for package restore. The .NET 10 SDK alone cannot build the starter. No Azure subscription, IIS, or database is needed; OrderDesk stores its products and orders in memory.
+
+**Rehearsal limitation:** With Modernize CLI **1.0.95**, the starter build and local assessment completed, but plan creation failed with `extensionSdkPath is required when standalone extensions are requested`. No upgraded build or test run was reached. The rehearsal used non-interactive CLI commands; menu interactions remain unverified. The steps below describe the intended workflow, not a successful end-to-end run on that version. See the planning error guidance in Step 4.
 
 ## Step 1 - Open a fresh copy of the sample
 
@@ -23,18 +27,26 @@ No Azure subscription, LocalDB, or MSMQ installation is needed.
 2. Clone the original sample into a separate Lab 2 folder. Don't use the worktree upgraded in Lab 1:
 
    ```powershell
-   git clone https://github.com/Azure-Samples/dotnet-migration-copilot-samples.git contoso-university-lab2
-   Set-Location .\contoso-university-lab2\ContosoUniversity
+   git clone https://github.com/rmoreirao/orderdesk-dotnet48.git orderdesk-dotnet48-lab2
+   Set-Location .\orderdesk-dotnet48-lab2
    ```
 
-3. If GitHub CLI isn't signed in, run:
+3. Check that the original project builds:
+
+   ```powershell
+   .\scripts\Build-Legacy.ps1
+   ```
+
+   The helper locates Visual Studio MSBuild and restores the legacy packages. Resolve any missing-tool or restore error before continuing. Don't run the generated executable. This helper is for the starter only; use `dotnet build` after modernization.
+
+4. If GitHub CLI isn't signed in, run:
 
    ```powershell
    gh auth login
    ```
 
-4. Sign in using the GitHub account with Copilot access.
-5. Start the interactive CLI:
+5. Sign in using the GitHub account with Copilot access.
+6. Start the interactive CLI from the repository root:
 
    ```powershell
    modernize
@@ -44,7 +56,9 @@ No Azure subscription, LocalDB, or MSMQ installation is needed.
 
 *Official menu example. 1 - Use the arrow keys to select Assess, then press Enter.*
 
-**Continue when:** The Modernize menu is open for the original Contoso University source.
+The starter has a single project, `src\OrderDesk.Legacy\OrderDesk.Legacy.csproj`, and no solution or test project. Keep the CLI at the repository root so it can also see the build script and configuration.
+
+**Continue when:** The starter builds and the Modernize menu is open for the original OrderDesk source.
 
 ## Step 2 - Select the assessment scope
 
@@ -53,9 +67,9 @@ No Azure subscription, LocalDB, or MSMQ installation is needed.
 
 ![Source selection, with Current folder marked 1](../../images/lab-2/source-type-selection.png)
 
-*1 - Choose Current folder. Your path should end in `contoso-university-lab2\ContosoUniversity`, not the example's folder.*
+*1 - Choose Current folder. Your path should end in `orderdesk-dotnet48-lab2`, not the example's folder.*
 
-3. If the CLI asks you to select repositories, keep only **ContosoUniversity** selected.
+3. If the CLI asks you to select repositories or projects, keep only the entry for **OrderDesk.Legacy** selected. Project discovery may name it `orderdesk-dotnet48-lab2.src.OrderDesk.Legacy` rather than just the clone folder.
 4. Under **assessment domains**, select **Upgrade** only. Use **Space** to deselect **Cloud Readiness** or **Security** if they're selected.
 
 ![Assessment domains, with Upgrade marked 1](../../images/lab-2/assess-domain-selection.png)
@@ -82,26 +96,36 @@ No Azure subscription, LocalDB, or MSMQ installation is needed.
 ## Step 3 - Review the assessment
 
 1. Open the report the CLI produces. If it doesn't open automatically, open `index.html` at the output path shown in the terminal.
-2. Find **ContosoUniversity** in the report.
-3. Read its current framework and upgrade recommendation. Look for **.NET Framework 4.8** and the recommendation to move to **.NET 10**.
-4. Open the application's details and read a code compatibility finding. For example, the existing app uses `System.Web` for MVC and routing, which needs an ASP.NET Core replacement.
+2. Find the **OrderDesk** application or **OrderDesk.Legacy** project in the report; the application may be labeled with the clone folder name.
+3. Confirm the current framework is **.NET Framework 4.8**. The initial report may not contain the .NET 10 target or detailed framework-upgrade findings; confirm that target explicitly when creating the plan.
+4. Open the application's details and compare a reported finding with the source. In the **1.0.95** rehearsal, the report listed **Hardcoded URLs detected** in `Program.cs` and a connection-string configuration finding in `App.config`, under **Cloud Readiness Issues**, even though the assessment metadata recorded Upgrade only. `App.config` contains a local listen URL, not a database connection string. Don't turn these findings into Azure or database tasks.
+5. Separately inspect `src\OrderDesk.Legacy\Startup.cs` to identify a real upgrade concern: it uses `System.Web.Http` and OWIN's `IAppBuilder` to configure Web API 2. These need ASP.NET Core hosting and controller routing. The legacy `.csproj` format and `packages.config` also need SDK-style equivalents. These are source-review observations, not findings guaranteed to appear in the initial report.
 
-![Actual code assessment excerpt showing the .NET 10 target and System.Web migration finding](../../images/lab-2/assessment-output.png)
+The menu images above are generic interface examples, not results from an OrderDesk run. Use the report generated for your local clone; finding counts and wording may differ.
 
-*Code assessment produced by the upgrade engine during the rehearsal, reformatted as an excerpt. Your initial report may arrange the findings differently.*
-
-**Continue when:** You can identify the app's starting framework, the upgrade target, and one issue to look for in the plan. If the report also contains Azure recommendations, leave them out of this lab's plan.
+**Continue when:** You can identify the app's starting framework and one source-backed change to look for in the plan. Keep .NET 10 as the explicit planning goal, and leave the report's Azure recommendations out of this lab.
 
 ## Step 4 - Create the local modernization plan
 
 1. Return to the terminal. At **How would you like to continue?**, choose **Create modernization plan**.
 2. Choose **Keep the plan local**.
 3. Keep the assessment you just generated as the planning input.
-4. Set the plan name to `contoso-dotnet10`.
+4. Set the plan name to `orderdesk-dotnet10`.
 5. Replace the default modernization goal with:
 
    ```text
-   Upgrade to .NET 10 and add an in-memory pagination test. Do not migrate to Azure.
+   Upgrade src\OrderDesk.Legacy\OrderDesk.Legacy.csproj from .NET Framework 4.8
+   to a controller-based ASP.NET Core API on .NET 10, keeping its current path.
+   Preserve GET /api/products, POST /api/orders, GET /api/orders/{id}, and
+   POST /api/orders/{id}/cancel, including status codes, the created order's
+   location, error bodies, camel-case JSON, and single shared in-memory inventory.
+   Add focused in-memory tests in tests\OrderDesk.Tests\OrderDesk.Tests.csproj.
+   Verify that two units of product 1 at 19.95 each total 39.90 and reduce stock
+   by two, and that cancelling twice restores stock only once.
+   Give each test a fresh store; if the private constructor and singleton prevent
+   isolation, make only the smallest behavior-preserving testability change.
+   Build and run the unit tests only. Do not start the API, make HTTP requests,
+   connect to a database, migrate to Azure, provision resources, or deploy.
    ```
 
    The default goal includes migrating to Azure. Don't accept that default for this lab.
@@ -110,31 +134,39 @@ No Azure subscription, LocalDB, or MSMQ installation is needed.
 
    | When asked about... | Choose... |
    | --- | --- |
-   | Application model | ASP.NET Core MVC |
+   | Project or upgrade scope | `src\OrderDesk.Legacy\OrderDesk.Legacy.csproj`; the starter has no `.sln` |
+   | Application model | Controller-based ASP.NET Core API |
    | Target framework | .NET 10 |
    | Upgrade approach | In-place |
    | Azure services, infrastructure, or deployment | No |
-   | Validation | Build and an in-memory pagination test; don't launch the web app |
+   | Validation | Build and isolated in-memory order creation/cancellation tests; don't start the API |
 
 7. When the plan is ready, leave the CLI at its continuation menu while you review the files. Don't choose execution yet.
 
 **Expected result:** Copilot creates a local plan from the assessment and your answers.
 
+**If planning fails:** The recorded **1.0.95** failure was `Request session.create failed ... Failed to initialize standalone session extensions: extensionSdkPath is required when standalone extensions are requested`. It happened before a plan was generated and also reproduced with process-local plugin-discovery isolation. Stop here rather than treating assessment success as a completed upgrade. Check the [Modernize CLI releases](https://github.com/microsoft/modernize-cli/releases) for a supported fix, then rerun planning before continuing. Don't disable required Upgrade functionality or manually rewrite the application and call that a CLI rehearsal.
+
 ## Step 5 - Review the plan before executing
 
-1. Open `.github\modernize\contoso-dotnet10\plan.md` in a text editor.
-2. Find **ASP.NET Core MVC on .NET 10** as the target.
-3. Look for the migration work that addresses your assessment finding. For example, the plan should replace the old `System.Web` hosting and routing with ASP.NET Core equivalents.
-4. Find the in-memory pagination test and build validation.
+1. Open `.github\modernize\orderdesk-dotnet10\plan.md` in a text editor.
+2. Find a **controller-based ASP.NET Core API on .NET 10** as the target, keeping `src\OrderDesk.Legacy\OrderDesk.Legacy.csproj` as the API project.
+3. Look for the migration work that addresses your source-backed upgrade concern: replace Web API 2 and OWIN hosting with ASP.NET Core, and convert the project and package references to SDK style.
+4. Check that the plan preserves the four API routes, camel-case JSON, error messages, and status codes. Order creation must keep **201 Created** and its location; invalid orders, missing resources, and insufficient stock must retain **400**, **404**, and **409** responses.
+5. Find the isolated in-memory order tests, their test-project path, and build validation. Testability changes must preserve the application's single shared inventory rather than creating a different store for every request.
+6. Open the task file linked by the CLI in the same plan folder to see execution tasks and dependencies. Its location can vary by version, for example `tasks.json` or `.metadata\tasks.json`. A dependency CVE-remediation task may also appear.
+7. If the plan contains Azure migration, resource provisioning, deployment, database access, API startup, or HTTP checks, have the agent revise it before approving.
 
-![Actual recorded CLI planning output describing the local upgrade and pagination test](../../images/lab-2/plan-output.png)
+Use these as review criteria, not as output from a recorded run:
 
-*Rehearsal output, reformatted from the real CLI log. The local path is shortened. Your plan name and task wording may differ.*
+| In the plan | What to check |
+| --- | --- |
+| API migration | ASP.NET Core replaces the legacy host and controllers without adding a UI or changing languages. |
+| Order creation test | Calling production `OrderStore` with product 1 and quantity 2 gives total `39.90m` at unit price `19.95m`, with stock reduced by 2. |
+| Repeated cancellation test | Cancelling restores the ordered quantity once; a second cancellation leaves stock unchanged and status remains `"cancelled"`. |
+| Validation | Build the upgraded project and discover and run the unit tests without a server or database. |
 
-5. Open `.metadata\tasks.json` in the same plan folder to see the execution tasks and their dependencies. A dependency CVE-remediation task may also appear.
-6. If the plan contains Azure migration, deployment, database access, or app-startup tasks, have the agent revise it before approving.
-
-**Continue when:** The plan upgrades the existing MVC application and includes the test, with no Azure work.
+**Continue when:** The plan upgrades the existing API and includes the focused tests, with no API startup or Azure work.
 
 ## Step 6 - Execute the reviewed plan
 
@@ -142,42 +174,32 @@ No Azure subscription, LocalDB, or MSMQ installation is needed.
 2. Choose **Execute modernization plan** after reviewing the plan.
 3. Confirm local execution.
 4. Follow the task progress in the terminal. Respond to any questions the agent asks before moving on.
-
-![Recorded execution output showing the completed upgrade task and the next pagination task starting](../../images/lab-2/execution-output.png)
-
-*Rehearsal progress, reformatted from the CLI log: `[>]` starts a task and `[+]` marks its completion. This excerpt shows the transition to testing, not the end of the whole run.*
-
-5. When execution finishes, review the changed web project and confirm it targets `net10.0`.
-
-![Actual migrated project file showing Microsoft.NET.Sdk.Web and net10.0](../../images/lab-2/project-output.png)
-
-*Project-file excerpt from the local rehearsal. The upgrade moved the app to the ASP.NET Core web SDK and .NET 10.*
+5. When execution finishes, review `src\OrderDesk.Legacy\OrderDesk.Legacy.csproj`. Confirm it uses `Microsoft.NET.Sdk.Web` and `<TargetFramework>net10.0</TargetFramework>`.
 
 **Continue when:** The local upgrade has completed and the project targets .NET 10. A failed or unfinished task is not a completed upgrade.
 
-## Step 7 - Build and check the test
+## Step 7 - Build and check the tests
 
-1. From the upgraded application folder, build the solution:
+1. From the upgraded repository root, build the API project:
 
    ```powershell
-   dotnet build .\ContosoUniversity.sln
+   dotnet build .\src\OrderDesk.Legacy\OrderDesk.Legacy.csproj
    ```
 
 2. Run its tests:
 
    ```powershell
-   dotnet test .\ContosoUniversity.Tests\ContosoUniversity.Tests.csproj
+   dotnet test .\tests\OrderDesk.Tests\OrderDesk.Tests.csproj
    ```
 
-   These are the paths generated in the rehearsal. If your agent chooses different names, use the solution and test-project paths it reports.
+   This is the test-project location requested in the goal, not a project included in the starter. If the agent reports a different generated location, use that actual path.
 
-3. Open the generated pagination test. It should use an in-memory list and call the application's pagination code, not a copy of that code inside the test. In the rehearsal, `Create_ReturnsCorrectItemsForRequestedPage` checked that page two returned items 11 through 20 from a 30-item list.
-4. Read the build and test results. The build must succeed, and the test runner must discover and pass the pagination test.
+3. Open the generated tests. They must call the application's real `OrderStore`, not copied business logic or a mocked store. Check the order total, stock reduction, cancellation status, and stock after each cancellation against the plan's criteria.
+4. Check that each test gets isolated state. Don't rely on test ordering or leftover singleton state; any testability change must preserve the API's single shared inventory.
+5. Read the build and test results. The build must succeed, and the test runner must discover and pass the order creation and cancellation tests.
 
-![Recorded successful build and passing pagination test output from the rehearsal](../../images/lab-2/validation-output.png)
+These are expected outcomes, not recorded successful OrderDesk rehearsal results: the 1.0.95 run stopped during planning. Zero tests discovered is not a passing test.
 
-*Actual verification output, reformatted for readability. The rehearsal discovered and passed 19 tests; your agent may generate a different number. Zero tests discovered is not a passing test.*
-
-**Finish when:** The upgraded code builds and the pagination test passes without starting the app or connecting to a database. Keep your changes local.
+**Finish when:** The upgraded code builds and the focused unit tests pass without starting the API, making HTTP requests, or connecting to a database. These checks don't prove HTTP compatibility or that the whole API works at runtime. Keep your changes local.
 
 **References:** [Modernization Agent overview](https://learn.microsoft.com/en-us/azure/developer/github-copilot-app-modernization/modernization-agent/overview), [interactive quickstart](https://learn.microsoft.com/en-us/azure/developer/github-copilot-app-modernization/modernization-agent/quickstart), and [image credits](../../images/lab-2/ATTRIBUTION.txt).

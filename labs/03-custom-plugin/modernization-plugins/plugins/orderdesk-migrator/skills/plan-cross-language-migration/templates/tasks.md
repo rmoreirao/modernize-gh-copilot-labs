@@ -2,7 +2,7 @@
 
 Status: Draft
 
-Approved plan: reference the current plan and its explicit user approval.
+Approved plan: reference the current plan, explicit approval, and unchanged generated baseline/freeze. Do not replace characterization during execution.
 
 | ID | Task | Depends on | Files | State | Acceptance criteria | Command/result evidence |
 | --- | --- | --- | --- | --- | --- | --- |
@@ -15,4 +15,4 @@ Await explicit user approval of these tasks before modifying production source o
 
 ## Final evidence
 
-Record actual Python checks, unchanged baseline results, source integrity, and remaining limitations.
+Record actual Python checks, same-identity generated baseline results and real TRX, source/freeze integrity, host cleanup, unsuccessful attempts/resolutions, and unverified behavior. Do not claim independent facilitator verification was performed by this agent.

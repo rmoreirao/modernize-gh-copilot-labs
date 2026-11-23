@@ -6,8 +6,8 @@
   "plugins": [
     {
       "name": "orderdesk-migrator",
-      "description": "A guided C# Web API 2 to Python FastAPI migration with an unchanged HTTP baseline.",
-      "version": "1.0.1",
+      "description": "A source-first C# API migration with agent-generated characterization and a reviewed frozen baseline.",
+      "version": "1.1.0",
       "source": "./plugins/orderdesk-migrator"
     }
   ]

@@ -8,7 +8,7 @@ using Xunit.Abstractions;
 
 [assembly: CollectionBehavior(DisableTestParallelization = true)]
 
-namespace OrderDesk.Baseline.Tests;
+namespace HttpBaseline.Tests;
 
 // A scenario owns this process. No reset endpoint, shared host, or ordered tests.
 internal sealed class ExternalHost : IAsyncDisposable
@@ -16,6 +16,7 @@ internal sealed class ExternalHost : IAsyncDisposable
     private readonly Process process;
     private readonly HttpClient client;
     private readonly Uri baseUrl;
+    private readonly string readyPath;
     private readonly ITestOutputHelper output;
     private readonly StringBuilder logs = new();
     private readonly object logGate = new();
@@ -41,6 +42,12 @@ internal sealed class ExternalHost : IAsyncDisposable
             || url.UserInfo.Length != 0)
             throw new InvalidOperationException("ORDERDESK_BASE_URL must be an HTTP loopback root URL.");
         baseUrl = url;
+        readyPath = RequiredEnvironment("ORDERDESK_READY_PATH");
+        if (!readyPath.StartsWith('/') || readyPath.StartsWith("//", StringComparison.Ordinal)
+            || readyPath.Any(character => char.IsWhiteSpace(character) || char.IsControl(character))
+            || readyPath.Contains('\\') || readyPath.Contains('#')
+            || new Uri(baseUrl, readyPath).Authority != baseUrl.Authority)
+            throw new InvalidOperationException("ORDERDESK_READY_PATH must be a same-host GET path starting with one slash.");
 
         var startInfo = new ProcessStartInfo(executable)
         {
@@ -95,11 +102,11 @@ internal sealed class ExternalHost : IAsyncDisposable
                 {
                     using var probeTimeout = new CancellationTokenSource(TimeSpan.FromSeconds(1));
                     using HttpResponseMessage response = await host.client.GetAsync(
-                        "api/products", probeTimeout.Token);
+                        host.readyPath, probeTimeout.Token);
                     host.EnsureAlive();
                     if (response.StatusCode == HttpStatusCode.OK)
                         return host;
-                    lastProbe = $"GET /api/products returned {(int)response.StatusCode}.";
+                    lastProbe = $"GET {host.readyPath} returned {(int)response.StatusCode}.";
                 }
                 catch (Exception exception) when (
                     exception is HttpRequestException or OperationCanceledException)
