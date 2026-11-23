@@ -6,6 +6,95 @@ Unlike a .NET version upgrade, this exercise translates models, business logic, 
 
 **Scope:** Run locally on Windows. No database, authentication, UI, deployment, CLR bridge, or proxy to the legacy host. The plugin is complete; you do not build it or edit a skill.
 
+## How the custom plugin works
+
+### The mental model
+
+The plugin packages a migration workflow, not an application or a finished Python port. Copilot runs **one coordinating agent** that loads five skills: specialized instructions, not separate agents. Scripts and templates support repeatable operations; application-specific tests and code are generated from discovery and approved execution.
+
+```text
+Learner in VS Code / Copilot
+             |
+             v
+  orderdesk-migrator agent
+             |
+             +--> Five skills: guidance + procedures
+             |         |
+             |         v
+             |    Generic scripts / templates
+             |
+             v
+  Application checkout: generated evidence + code
+  (not the installed plugin folder)
+```
+
+### Components at a glance
+
+The workshop's plugin source is organized as follows:
+
+```text
+modernization-plugins\
++-- .github\plugin\marketplace.json  Optional distribution catalog
+`-- plugins\orderdesk-migrator\      Install this package folder
+    +-- plugin.json                 Package identity
+    +-- com.github.copilot\agents\   Copilot coordinator definition
+    `-- skills\                     One SKILL.md per skill
+        +-- target-architecture\
+        +-- assess-dotnet-api\       templates\: assessment
+        +-- baseline-tests\         scripts\, templates\, tests\
+        +-- plan-cross-language-migration\  templates\: plan/tasks
+        `-- dotnet-to-fastapi\
+```
+
+The [manifest](modernization-plugins/plugins/orderdesk-migrator/plugin.json) identifies the package; the [catalog](modernization-plugins/.github/plugin/marketplace.json) demonstrates central distribution, not an execution step. Local installation uses the plugin folder.
+
+`com.github.copilot` holds harness-specific customization; `skills` holds portable instructions. Within skills, `scripts` contains executable helpers and `templates` contains reusable scaffolding. Crucially, `baseline-tests\tests` checks **plugin tooling**, not application behavior: the application-specific contract and cases do not ship here.
+
+| Component | Responsibility |
+| --- | --- |
+| [orderdesk-migrator agent](modernization-plugins/plugins/orderdesk-migrator/com.github.copilot/agents/orderdesk-migrator.agent.md) | Coordinate stages, workspace boundaries, approvals, and recovery. |
+| [target-architecture](modernization-plugins/plugins/orderdesk-migrator/skills/target-architecture/SKILL.md) | Define destination rules, not facts about the source API. |
+| [assess-dotnet-api](modernization-plugins/plugins/orderdesk-migrator/skills/assess-dotnet-api/SKILL.md) | Discover source and live HTTP behavior; assemble the assessment. |
+| [baseline-tests](modernization-plugins/plugins/orderdesk-migrator/skills/baseline-tests/SKILL.md) | Bootstrap the harness, guide case authoring, run, seal, and recheck. |
+| [plan-cross-language-migration](modernization-plugins/plugins/orderdesk-migrator/skills/plan-cross-language-migration/SKILL.md) | Produce the plan, then tasks after plan approval. |
+| [dotnet-to-fastapi](modernization-plugins/plugins/orderdesk-migrator/skills/dotnet-to-fastapi/SKILL.md) | Implement approved tasks; verify the unchanged contract. |
+
+### Workflow and approval gates
+
+A **baseline** is the contract and HTTP checks discovered from the actual application. It must pass against .NET and receive learner review before freezing:
+
+```text
+Discover source + HTTP behavior
+              |
+              v
+Assessment + candidate contract/tests + passing .NET run
+              |
+       [Learner approves]
+              v
+Seal baseline --> Plan --> [Learner approves]
+                              |
+                              v
+                            Tasks
+                              |
+                    [Learner approves execution]
+                              v
+                    Implement Python API
+                              |
+                              v
+Same frozen HTTP tests --> Python, with C# stopped
+                              |
+                              v
+                    Results + integrity evidence
+```
+
+The expectations stay unchanged; only host launch inputs differ. Fix target failures, not frozen tests. Approvals are review guardrails, not security boundaries.
+
+Generated files belong to the **application checkout**: contract/cases in `tests\baseline`, reports/plan/tasks in `.github\upgrades\dotnet-to-fastapi`, and approved Python code in `src\orderdesk_python`. They never belong in the installed plugin cache.
+
+### Explore the plugin
+
+For a read-only tour, start with the linked agent definition, follow `assess-dotnet-api` into `baseline-tests`, then compare its [initializer](modernization-plugins/plugins/orderdesk-migrator/skills/baseline-tests/scripts/Initialize-Baseline.ps1) with the [runner template](modernization-plugins/plugins/orderdesk-migrator/skills/baseline-tests/templates/Test-Baseline.ps1). Use the other skill links to follow destination guidance, planning, and execution.
+
 ## Prerequisites
 
 | Tool | Why / installation |
@@ -172,7 +261,9 @@ No instructor reference suite is supplied or required. Review the generated case
 
 Approval markers and hashes are review guardrails/tamper detection, not security enforcement. Follow normal tool/trust approvals.
 
-**Rehearsal status:** The revised separate-repository setup is awaiting its fresh SDK-agent rehearsal. Earlier source-copy results do not establish that the clone-based instructions work end-to-end.
+**Rehearsal status:** Plugin **1.1.0** completed a fresh-clone SDK rehearsal of [orderdesk-dotnet48](https://github.com/rmoreirao/orderdesk-dotnet48) at commit `63058721f6bf89b5696db47920e56b1b7ac6da75`. The agent discovered the application and generated **33 characterization cases**; the same frozen cases passed against .NET and the independent Python target, with zero failed, skipped, or incomplete outcomes and C# stopped for the Python comparison. The retained generic tooling passed **26/26 checks**, and **17 live HTTP/OpenAPI exchanges** passed. The run used .NET SDK **10.0.403** and Python **3.12.10**.
+
+An initial target OpenAPI schema defect was corrected and rechecked without changing the frozen expectations. All twelve starter files, the approved plan, seal, and original Before evidence remained unchanged; all owned hosts were stopped. Generated answers and full reports remain in the isolated rehearsal checkout, not in this workshop or the public starter. These are this run's observed counts, not required counts for learner-generated suites.
 
 **Verification boundary:** The automated rehearsal uses SDK-agent execution and coordinator review at each stage, not human interaction with native VS Code chat/approval UI. The participant workflow remains VS Code. No independent reference suite is included in this verification.
 
