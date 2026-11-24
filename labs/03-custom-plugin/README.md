@@ -1,105 +1,18 @@
 # Lab 3: Port a C# API to Python with a custom plugin
 
-Start with an ordinary **C# / .NET Framework 4.8 Web API 2** application. Use the complete **orderdesk-migrator** plugin in **VS Code** to discover its behavior, generate a reviewed HTTP baseline, and then migrate it to **Python / FastAPI**.
+Use the ready-made **orderdesk-migrator** plugin in **VS Code** to port the [OrderDesk API](https://github.com/rmoreirao/orderdesk-dotnet48) from **C# / .NET Framework 4.8** to **Python / FastAPI**.
 
-Unlike a .NET version upgrade, this exercise translates models, business logic, validation, state, and hosting into another language. Discovery is part of the exercise: the original application does not describe its replacement or supply a migration specification. The agent-generated baseline becomes the unchanged oracle only after review.
+**What you'll finish with:** An independent Python API that passes the same reviewed HTTP checks as the original application. Unlike Lab 2's in-place .NET upgrade, this lab keeps the original production source unchanged and compares behavior across languages.
 
-**Scope:** Run locally on Windows. No database, authentication, UI, deployment, CLR bridge, or proxy to the legacy host. The plugin is complete; you do not build it or edit a skill.
+**How the plugin helps:** One coordinating **agent** uses five **skills**: reusable instructions, not separate agents. You install the complete package; you do not build it or edit skills. The [plugin reference](modernization-plugins/README.md#how-the-custom-plugin-works) explains the components.
 
-## How the custom plugin works
-
-### The mental model
-
-The plugin packages a migration workflow, not an application or a finished Python port. Copilot runs **one coordinating agent** that loads five skills: specialized instructions, not separate agents. Scripts and templates support repeatable operations; application-specific tests and code are generated from discovery and approved execution.
-
-```text
-Learner in VS Code / Copilot
-             |
-             v
-  orderdesk-migrator agent
-             |
-             +--> Five skills: guidance + procedures
-             |         |
-             |         v
-             |    Generic scripts / templates
-             |
-             v
-  Application checkout: generated evidence + code
-  (not the installed plugin folder)
-```
-
-### Components at a glance
-
-The workshop's plugin source is organized as follows:
-
-```text
-modernization-plugins\
-+-- .github\plugin\marketplace.json  Optional distribution catalog
-`-- plugins\orderdesk-migrator\      Install this package folder
-    +-- plugin.json                 Package identity
-    +-- com.github.copilot\agents\   Copilot coordinator definition
-    `-- skills\                     One SKILL.md per skill
-        +-- target-architecture\
-        +-- assess-dotnet-api\       templates\: assessment
-        +-- baseline-tests\         scripts\, templates\, tests\
-        +-- plan-cross-language-migration\  templates\: plan/tasks
-        `-- dotnet-to-fastapi\
-```
-
-The [manifest](modernization-plugins/plugins/orderdesk-migrator/plugin.json) identifies the package; the [catalog](modernization-plugins/.github/plugin/marketplace.json) demonstrates central distribution, not an execution step. Local installation uses the plugin folder.
-
-`com.github.copilot` holds harness-specific customization; `skills` holds portable instructions. Within skills, `scripts` contains executable helpers and `templates` contains reusable scaffolding. Crucially, `baseline-tests\tests` checks **plugin tooling**, not application behavior: the application-specific contract and cases do not ship here.
-
-| Component | Type | Responsibility |
-| --- | --- | --- |
-| [orderdesk-migrator agent](modernization-plugins/plugins/orderdesk-migrator/com.github.copilot/agents/orderdesk-migrator.agent.md) | Agent | Coordinate stages, workspace boundaries, approvals, and recovery. |
-| [target-architecture](modernization-plugins/plugins/orderdesk-migrator/skills/target-architecture/SKILL.md) | Skill | Define destination rules, not facts about the source API. |
-| [assess-dotnet-api](modernization-plugins/plugins/orderdesk-migrator/skills/assess-dotnet-api/SKILL.md) | Skill | Discover source and live HTTP behavior; assemble the assessment. |
-| [baseline-tests](modernization-plugins/plugins/orderdesk-migrator/skills/baseline-tests/SKILL.md) | Skill | Bootstrap the harness, guide case authoring, run, seal, and recheck. |
-| [plan-cross-language-migration](modernization-plugins/plugins/orderdesk-migrator/skills/plan-cross-language-migration/SKILL.md) | Skill | Produce the plan, then tasks after plan approval. |
-| [dotnet-to-fastapi](modernization-plugins/plugins/orderdesk-migrator/skills/dotnet-to-fastapi/SKILL.md) | Skill | Implement approved tasks; verify the unchanged contract. |
-
-### Workflow and approval gates
-
-A **baseline** is the contract and HTTP checks discovered from the actual application. It must pass against .NET and receive learner review before freezing:
-
-```text
-Discover source + HTTP behavior
-              |
-              v
-Assessment + candidate contract/tests + passing .NET run
-              |
-       [Learner approves]
-              v
-Seal baseline --> Plan --> [Learner approves]
-                              |
-                              v
-                            Tasks
-                              |
-                    [Learner approves execution]
-                              v
-                    Implement Python API
-                              |
-                              v
-Same frozen HTTP tests --> Python, with C# stopped
-                              |
-                              v
-                    Results + integrity evidence
-```
-
-The expectations stay unchanged; only host launch inputs differ. Fix target failures, not frozen tests. Approvals are review guardrails, not security boundaries.
-
-Generated files belong to the **application checkout**: contract/cases in `tests\baseline`, reports/plan/tasks in `.github\upgrades\dotnet-to-fastapi`, and approved Python code in `src\orderdesk_python`. They never belong in the installed plugin cache.
-
-### Explore the plugin
-
-For a read-only tour, start with the linked agent definition, follow `assess-dotnet-api` into `baseline-tests`, then compare its [initializer](modernization-plugins/plugins/orderdesk-migrator/skills/baseline-tests/scripts/Initialize-Baseline.ps1) with the [runner template](modernization-plugins/plugins/orderdesk-migrator/skills/baseline-tests/templates/Test-Baseline.ps1). Use the other skill links to follow destination guidance, planning, and execution.
+**Local only:** Windows, with no database, authentication, UI, cloud deployment, CLR bridge, or proxy to the original API.
 
 ## Prerequisites
 
 | Tool | Why / installation |
 | --- | --- |
-| Git and VS Code | Keep this workshop checkout for the plugin and clone the separate application repository. [VS Code installation](https://code.visualstudio.com/docs/setup/windows). |
+| Git and VS Code | Clone both repositories and open the application. [Install Git](https://git-scm.com/install/windows) and [VS Code](https://code.visualstudio.com/docs/setup/windows). |
 | GitHub Copilot access in VS Code | Sign in and use the **Copilot** harness. [Copilot setup](https://code.visualstudio.com/docs/copilot/setup). |
 | Agent plugin support | Use a VS Code version supporting Agent Plugins 1.0. See [plugin installation](https://code.visualstudio.com/docs/agent-customization/agent-plugins). |
 | .NET Framework 4.8 runtime and Developer Pack | Run and compile the legacy Windows application. [Developer Pack](https://dotnet.microsoft.com/en-us/download/dotnet-framework/net48). |
@@ -108,163 +21,261 @@ For a read-only tour, start with the linked agent definition, follow `assess-dot
 | .NET 10 SDK | Run the HTTP project generated during assessment, **not** the original API or migrated service. [SDK installation](https://learn.microsoft.com/en-us/dotnet/core/install/windows). |
 | Python 3.12 with pip | Used during approved execution for the generated target's local environment. [Python installation](https://www.python.org/downloads/windows/). Verify `py -3.12 --version`. |
 
-Initial restores need access to NuGet and the configured Python package feed. You do not need IIS, SQL Server, a separate NuGet CLI, or an Azure subscription.
+You can reuse applicable tools from earlier labs. Open a new terminal after installing tools. Initial restores need access to NuGet and the configured Python package feed; no IIS, SQL Server, separate NuGet CLI, or Azure subscription is needed.
 
-## 1. Clone the application and locate the plugin
+**Verification note:** The recorded successful rehearsal used SDK execution, not native VS Code interaction. Native UI verification and screenshots are deferred; see the [rehearsal details](modernization-plugins/README.md#rehearsal-and-verification-boundary).
 
-Use the real application repository separately from this workshop's plugin source:
+## Step 1 - Prepare two separate checkouts
 
-| Location | Role |
+**Where:** A local **PowerShell 7** window. For the existing-workshop option below, open it at your workshop repository root.
+
+You need two repositories, with different roles:
+
+| Checkout | Role |
 | --- | --- |
-| [rmoreirao/orderdesk-dotnet48](https://github.com/rmoreirao/orderdesk-dotnet48) | Original application repository: source and ordinary .NET build/run documentation |
-| [modernization-plugins](modernization-plugins/README.md) in this workshop | Shared plugin source: destination guidance, discovery workflow, and generic verification scaffolding |
+| `modernize-gh-copilot-labs` | Workshop instructions and the plugin package you install. |
+| `orderdesk-dotnet48-lab3` | A fresh application copy where Copilot will generate tests, reports, and Python code. |
 
-From the **workshop repository root**, clone a fresh application checkout beside it and open that checkout:
+1. Choose a parent folder. This default works under your own home directory; change only `$labRoot` if you prefer another writable location:
 
-```powershell
-$workshopRoot = (Get-Location).Path
-$appRoot = Join-Path (Split-Path -Parent $workshopRoot) 'orderdesk-dotnet48-lab3'
-if (Test-Path -LiteralPath $appRoot) { throw 'Choose a new application folder; do not overwrite or reuse an earlier run.' }
-git clone https://github.com/rmoreirao/orderdesk-dotnet48.git $appRoot
-if ($LASTEXITCODE -ne 0) { throw 'Application clone failed.' }
-code $appRoot
-```
+   ```powershell
+   $labRoot = Join-Path $HOME 'copilot-labs'
+   New-Item -ItemType Directory -Path $labRoot -Force -ErrorAction Stop | Out-Null
+   ```
 
-Open only the **cloned application folder** as the application workspace, not the workshop root or a combined workspace. Keep the workshop checkout available for plugin installation; you may inspect it in a separate window. All following application build/run commands and chat requests belong in the application's VS Code window. Do not supply reference tests, an earlier rehearsal, or a previous target answer to the application chat.
+2. Choose **one** workshop option:
 
-The application's own README describes only its current operation. No characterization contract, baseline project, target launcher, or upgrade report is prepopulated there.
+   **Option A - Clone the workshop for the first time:**
 
-## 2. Build and explore the original application
+   ```powershell
+   $workshopRoot = Join-Path $labRoot 'modernize-gh-copilot-labs'
+   if (Test-Path -LiteralPath $workshopRoot) { throw 'Workshop folder already exists. Use Option B instead.' }
+   git clone https://github.com/rmoreirao/modernize-gh-copilot-labs.git $workshopRoot
+   if ($LASTEXITCODE -ne 0) { throw 'Workshop clone failed.' }
+   ```
 
-In a terminal rooted at the cloned application, follow its [.NET-only README](https://github.com/rmoreirao/orderdesk-dotnet48/blob/main/README.md):
+   **Option B - Use your existing workshop checkout:**
 
-```powershell
-.\scripts\Build-Legacy.ps1
-.\src\OrderDesk.Legacy\bin\Debug\OrderDesk.Legacy.exe --url http://localhost:5088/
-```
+   Run this from the root of `modernize-gh-copilot-labs`, not from a lab subfolder:
 
-In another terminal, try `GET http://localhost:5088/api/products`. Stop your manually launched host with Ctrl+C afterward so the agent can own fresh hosts during characterization.
+   ```powershell
+   $workshopRoot = (Get-Location).Path
+   ```
 
-**Continue when:** the original application builds, starts, and responds. You have not established migration expectations yet; the agent must discover and characterize behavior rather than read a supplied solution.
+3. In the **same PowerShell window**, resolve the plugin folder and clone a fresh application:
 
-## 3. Install and inspect the plugin
+   ```powershell
+   $pluginRoot = (Resolve-Path -LiteralPath (
+       Join-Path $workshopRoot 'labs\03-custom-plugin\modernization-plugins\plugins\orderdesk-migrator'
+   ) -ErrorAction Stop).Path
+   $appRoot = Join-Path $labRoot 'orderdesk-dotnet48-lab3'
+   if (Test-Path -LiteralPath $appRoot) { throw 'Choose a new application folder; do not overwrite or reuse an earlier run.' }
+   git clone https://github.com/rmoreirao/orderdesk-dotnet48.git $appRoot
+   if ($LASTEXITCODE -ne 0) { throw 'Application clone failed.' }
+   Write-Output "Application folder: $appRoot"
+   Write-Output "Plugin folder to install: $pluginRoot"
+   ```
 
-1. In the application window, choose the **Copilot** harness.
-2. Run **Chat: Install Plugin from Source** from the Command Palette.
-3. Enter the absolute path to the **workshop checkout's** `labs\03-custom-plugin\modernization-plugins\plugins\orderdesk-migrator` folder, not a path inside the cloned application. In a terminal at the workshop repository root, `(Resolve-Path .\labs\03-custom-plugin\modernization-plugins\plugins\orderdesk-migrator).Path` prints that path.
-4. Review the local package and any trust/installation prompt before confirming.
-5. Run **Chat: Open Customizations**, open **Plugins**, and confirm **orderdesk-migrator 1.1.0** is installed/enabled in the intended context.
-6. Inspect its agent and five skills. In a fresh application chat, use **Add Context (+) > Agent...** (or the current agent-name button) to select **orderdesk-migrator**.
+   If the application folder exists, change its name in the `$appRoot` assignment and rerun this block. Preserve previous work; do not delete it or reuse approvals from another attempt.
 
-If replacing an earlier workshop package, update only that local plugin and verify its version in a fresh chat. Version 1.0.1 expected a prepared baseline and is not the cold-start exercise. Leave Azure modernization agents, Upgrade, and unrelated extensions untouched.
+4. Save or copy the printed **plugin folder** path for Step 3, then open the application in a new VS Code window:
 
-If Customizations shows the new version but the agent picker is stale, use **Developer: Reload Window**, then reopen the picker in a fresh chat. Verify the selected agent's description mentions discovery and generated characterization; do not copy agent files into the original application to work around discovery.
+   ```powershell
+   code -n $appRoot
+   ```
 
-If plugin support is disabled, consult the [VS Code plugin settings](https://code.visualstudio.com/docs/agent-customization/agent-plugins); do not bypass organization policy or trust prompts. If the agent or skills do not appear, stop and resolve installation/discovery before the exercise.
+   If `code` is unavailable, open VS Code and use **File > Open Folder** to select the printed application folder. Open only that folder, not the workshop or a combined workspace.
 
-## 4. Discover, characterize, and review
+The path variables above belong to the original PowerShell session; they do not automatically exist in VS Code's new terminals. Keep the workshop checkout available for installation, but do not copy plugin files into the application.
 
-Send:
+**Expected result:** The application window shows `src\OrderDesk.Legacy`, and you have the absolute plugin-folder path ready.
 
-```text
-Assess this .NET application for an independent Python/FastAPI migration.
-First inspect its source and running HTTP behavior. Use the plugin's generic
-scaffolding to generate a current-state contract and characterization tests
-from that evidence, then run them against .NET.
-Present the assessment, contract, cases, actual results, and limitations.
-Do not change production source or create the Python environment/implementation.
-Stop for my review of the assessment and candidate baseline.
-```
+**Continue when:** You are in the fresh application workspace, separate from the workshop checkout and any earlier migration.
 
-Inspect the newly generated artifacts:
+## Step 2 - Run the original API
 
-- `.github\upgrades\dotnet-to-fastapi\assessment.md`: source/HTTP evidence and proposed changes.
-- `tests\baseline\contract.md` and the generated cases: target-neutral observations, meaningful assertions, and explicit comparison normalizations.
-- `baseline-report.md` and its real TRX: the Before run actually discovered and passed tests against .NET.
+**Where:** The **application's VS Code window**, in a **PowerShell 7** terminal at its root. Use **Terminal > New Terminal** and select PowerShell 7 if needed.
 
-Check that findings came from this application, not from assumptions or a supplied reference suite. Does the characterization cover the observed routes, JSON types, errors, boundaries, and state effects? What remains uncharacterized? A passing suite is useful evidence, not proof of comprehensive coverage.
+1. Build the original application using its [own build instructions](https://github.com/rmoreirao/orderdesk-dotnet48/blob/main/README.md):
 
-**Continue when:** the candidate tests genuinely pass, you have reviewed their meaning, and the agent has stopped. Zero discovery, skipped/incomplete outcomes, or startup alone is not success. No Python code/environment should exist yet.
+   ```powershell
+   .\scripts\Build-Legacy.ps1
+   ```
 
-## 5. Approve the assessment/baseline and review the plan
+   Resolve any build or restore error before continuing. The helper locates Visual Studio MSBuild; the .NET 10 SDK alone cannot build this starter.
 
-Send:
+2. Start the API and leave this terminal running:
 
-```text
-I approve the current assessment and characterization contract/tests/results.
-Seal this passing baseline, then create the Python migration plan.
-Stop for my review; do not create executable tasks or target code yet.
-```
+   ```powershell
+   .\src\OrderDesk.Legacy\bin\Debug\OrderDesk.Legacy.exe --url http://localhost:5088/
+   ```
 
-The baseline skill seals the reviewed passing Before run only if its current inputs and actual TRX still match. If you revised the cases, they need a new real run and review first. Do not overwrite an existing freeze.
+3. Open a **second** PowerShell 7 terminal and request the product list:
 
-Open `plan.md` in the scenario folder. Require an evidence-backed mapping, not just "rewrite in Python":
+   ```powershell
+   Invoke-RestMethod -Uri 'http://localhost:5088/api/products'
+   ```
 
-| Legacy behavior | Plan must preserve |
-| --- | --- |
-| Observed numeric semantics and JSON types | Exact preservation, not a framework-default conversion |
-| Public names, routes, headers, and errors | The characterized wire contract, not assumed target conventions |
-| State lifetime, mutations, and repeated operations | The behavior evidenced in the original implementation |
-| Input boundaries and coercion | Constraints supported by source and characterization |
-| Frozen test inputs and host configuration | The same assertions with explicit, separate target launch inputs |
+   PowerShell should display product data from the JSON response, not a connection error.
 
-Ask for a plan revision if one is missing. A revision requires a new review; the agent should not start implementation.
+4. Return to the **first** terminal and press **Ctrl+C** to stop the host you started. The agent will launch fresh hosts during assessment.
 
-## 6. Approve the plan and review tasks
+If startup fails because of an occupied port or OWIN access denial, use the [troubleshooting reference](modernization-plugins/README.md#troubleshooting). Stop only your own host; do not change system permissions or kill unrelated processes.
 
-Send:
+**Expected result:** The original API builds and returns products, then your manual host stops. This is a startup check, not the migration baseline.
 
-```text
-I approve the current plan. Create dependency-ordered tasks with files and acceptance criteria.
-Do not execute them yet.
-```
+**Continue when:** The application works locally and the manually started host is stopped.
 
-Open `tasks.md`. Check environment/package and ignore-rule setup, business/model translation, HTTP adapters, runtime/schema checks, and unchanged-baseline verification. Each task needs prerequisites, files, acceptance criteria, and real command/result fields. Replacing the characterization suite is not an implementation task.
+## Step 3 - Install and select the plugin
 
-**Continue when:** you have reviewed the tasks and the agent has stopped for execution approval.
+**Where:** The **application's VS Code window**, in Copilot Chat.
 
-## 7. Execute the approved tasks
+1. Sign in with the GitHub account that has Copilot access and choose the **Copilot** harness.
+2. Open the Command Palette with **Ctrl+Shift+P** and run **Chat: Install Plugin from Source**.
+3. Paste the absolute **plugin folder** path printed in Step 1. It ends in `plugins\orderdesk-migrator` inside the workshop checkout. Select the folder, not `plugin.json`, a skill file, or the application repository.
+4. Review the package and any trust/installation prompt before confirming. No marketplace registration is needed.
+5. Run **Chat: Open Customizations**, open **Plugins**, and confirm **orderdesk-migrator 1.1.0** is installed and enabled for the intended context.
+6. Inspect the included agent and five skills. In a **fresh application chat**, use **Add Context (+) > Agent...** or the current agent-name button to select **orderdesk-migrator**.
 
-Send:
+If the plugin or agent is missing, stop and use the [installation troubleshooting](modernization-plugins/README.md#troubleshooting). Respect organization policy and trust prompts; do not work around discovery by copying files into the application.
 
-```text
-I approve the current tasks for execution. Implement the Python API.
-Keep the original production source and frozen baseline unchanged.
-Run the same characterized HTTP expectations against the independent target.
-```
+**Expected result:** The selected agent is **orderdesk-migrator**, with a description mentioning discovery and generated characterization.
 
-Follow task progress and inspect the changes. Expected generated files include `src\orderdesk_python`, root `requirements.txt`, and a local `.venv`. The Python service must contain the business implementation; it must not call a CLR or forward to the C# host.
+**Continue when:** The plugin, agent, and five skills are available. Keep this application chat for the remaining stages so its reviews and approvals stay together.
 
-Review the actual package install and command output. The agent must fix migration-caused failures rather than edit tests, refresh hashes, or claim success from compilation alone.
+## Step 4 - Record and review the API's behavior
 
-## 8. Verify behavior and evidence
+**Where:** The same **application chat**, with **orderdesk-migrator** selected, then the application's editor.
 
-Read `baseline-report.md`, actual TRX, and `tasks.md` for real Before/After commands, outcomes, test identities, integrity, and cleanup. The generic runner uses `-Phase Before` / `-Phase After` with explicit host inputs, not a built-in `-Target Python` mode. Re-run the exact After command recorded in the task evidence if needed; use the actual approved executable/arguments and readiness path.
+A **contract** records what the original API actually does: its requests, responses, errors, and state changes. **Characterization tests** check those observations over HTTP. Together, they form the candidate **baseline** that Python will later be compared against.
 
-The target comparison must work with C# stopped. Confirm that assertions did not change between hosts, Python genuinely implements the behavior, and runtime/OpenAPI checks describe the responses actually sent.
+1. Send this prompt:
 
-No instructor reference suite is supplied or required. Review the generated cases against the observed application behavior; the suite does not need to reproduce a predetermined case count.
+   ```text
+   Assess this .NET application for an independent Python/FastAPI migration.
+   First inspect its source and running HTTP behavior. Use the plugin's generic
+   scaffolding to generate a current-state contract and characterization tests
+   from that evidence, then run them against .NET.
+   Present the assessment, contract, cases, actual results, and limitations.
+   Do not change production source or create the Python environment/implementation.
+   Stop for my review of the assessment and candidate baseline.
+   ```
 
-**Finish when:** both hosts pass the same reviewed frozen expectations, covered files/hashes and actual identities match, and evidence is recorded. Focused characterization does not prove exhaustive compatibility or production readiness.
+2. Follow the agent's progress and review any tool approvals. Wait for it to present its assessment and stop; do not approve the next stage yet.
+3. Press **Ctrl+P** in VS Code, paste a path below, and press **Enter** to open each generated file. All paths are relative to the application:
 
-## Troubleshooting and limitations
+   | File | What to find |
+   | --- | --- |
+   | `.github\upgrades\dotnet-to-fastapi\assessment.md` | Source and HTTP observations, proposed changes, and limitations. |
+   | `tests\baseline\contract.md` | The recorded API behavior and any explicitly documented comparison adjustments. |
+   | `.github\upgrades\dotnet-to-fastapi\baseline-report.md` | The actual .NET **Before** run and the location of its TRX test-result file. |
 
-- **Legacy build fails:** check MSBuild and the .NET Framework targeting pack; `scripts\Build-Legacy.ps1` discovers MSBuild rather than assuming a machine-specific path.
-- **Port occupied:** stop the specific host you started, not every Python/.NET process. The generated fixture must not reuse or kill an unrelated listener.
-- **OWIN access denied:** an administrator may need a URL reservation for exactly `http://localhost:5088/` and your Windows account. Review that setup with them; do not grant wildcard URLs or Everyone access. The lab does not modify reservations automatically.
-- **Python environment absent:** execution must generate its package, pinned `requirements.txt`, and `.venv`; the starter intentionally contains no answer.
-- **Contract or harness absent before assessment:** this is expected. Verify plugin 1.1.0 and let its baseline skill initialize infrastructure and author cases from actual discovery. Do not copy cases from another run into the application.
-- **Initializer finds existing files:** inspect them and resume only if valid; do not overwrite unrelated tests or reset the application.
-- **Reusing an earlier application checkout:** generated `tests\baseline`, upgrade evidence, or target files mean it is not a clean start. Preserve that work and clone into a different fresh folder for this exercise; do not overwrite an existing suite or reuse its approvals.
-- **Python package pin unavailable:** a configured mirror can lag public releases. Resolve compatible published versions available through the approved feed and update the generated pins before installing; do not silently change package-index settings.
-- **Baseline changed:** inspect the diff and fix the migration. Do not re-freeze to hide a failing port.
+   Follow the assessment's links to the generated case files and actual test results. No contract or tests are supplied by the starter; their absence before this step is expected.
 
-Approval markers and hashes are review guardrails/tamper detection, not security enforcement. Follow normal tool/trust approvals.
+4. Review a small set of examples from the agent's observations:
 
-**Rehearsal status:** Plugin **1.1.0** completed a fresh-clone SDK rehearsal of [orderdesk-dotnet48](https://github.com/rmoreirao/orderdesk-dotnet48) at commit `63058721f6bf89b5696db47920e56b1b7ac6da75`. The agent discovered the application and generated **33 characterization cases**; the same frozen cases passed against .NET and the independent Python target, with zero failed, skipped, or incomplete outcomes and C# stopped for the Python comparison. The retained generic tooling passed **26/26 checks**, and **17 live HTTP/OpenAPI exchanges** passed. The run used .NET SDK **10.0.403** and Python **3.12.10**.
+   | Example to inspect | Review question |
+   | --- | --- |
+   | A successful read, such as the product request from Step 2 | Do the contract and tests check the observed status, field names, values, and JSON types? |
+   | An invalid request | Do the expected error status and response match what .NET actually returned? |
+   | An operation that changes state, including repetition or failure | Do the tests check the observed effects, not just that a request completed? |
+   | A known gap | Does the assessment explain what was not characterized rather than claiming complete coverage? |
 
-An initial target OpenAPI schema defect was corrected and rechecked without changing the frozen expectations. All twelve starter files, the approved plan, seal, and original Before evidence remained unchanged; all owned hosts were stopped. Generated answers and full reports remain in the isolated rehearsal checkout, not in this workshop or the public starter. These are this run's observed counts, not required counts for learner-generated suites.
+   Ask for corrections or explanations before approval if an example is unsupported. Corrected cases need a new real .NET run and review. Do not provide tests or answers from another checkout.
 
-**Verification boundary:** The automated rehearsal uses SDK-agent execution and coordinator review at each stage, not human interaction with native VS Code chat/approval UI. The participant workflow remains VS Code. No independent reference suite is included in this verification.
+**Expected result:** An assessment, observed contract, generated cases, and a genuine passing .NET run, with no Python implementation or environment yet.
 
-**References:** [Plugin authoring](https://code.visualstudio.com/docs/agents/reference/agent-plugin-reference), [FastAPI validation/errors](https://fastapi.tiangolo.com/tutorial/handling-errors/), [Pydantic Decimal serialization](https://docs.pydantic.dev/latest/api/standard_library_types/), and [simplejson decimal support](https://simplejson.readthedocs.io/en/latest/).
+**Continue when:** You have reviewed the examples and limitations, the agent has stopped, and the actual results show nonzero tests with all passed and none skipped or incomplete. Startup or compilation alone is not a passing baseline.
+
+## Step 5 - Approve the baseline and review the plan
+
+**Where:** The same **application chat**, then the application's editor.
+
+**Freezing** or **sealing** records the approved passing baseline so later changes can be detected. Python must pass those checks; the checks must not be changed to make Python pass.
+
+1. Only after completing the previous review, send:
+
+   ```text
+   I approve the current assessment and characterization contract/tests/results.
+   Seal this passing baseline, then create the Python migration plan.
+   Stop for my review; do not create executable tasks or target code yet.
+   ```
+
+2. Wait for the agent to stop with the plan. Open `.github\upgrades\dotnet-to-fastapi\plan.md` with **Ctrl+P**.
+3. Check how the plan preserves what you reviewed:
+
+   | In the plan | What to check |
+   | --- | --- |
+   | API behavior | Observed routes, field names, headers, statuses, and errors stay compatible. |
+   | Values and state | Observed JSON types, numeric behavior, input boundaries, and state changes are preserved. |
+   | Python implementation | Real Python modules implement the behavior without a CLR bridge or forwarding to C#. |
+   | Verification | The frozen checks stay unchanged; the plan records how to launch the independent target. |
+
+4. Request a revision if anything is missing. Review the revised plan before approving; do not move straight to implementation.
+
+**Expected result:** The reviewed passing baseline is sealed and a migration plan is ready. No executable tasks or target code have been created.
+
+**Continue when:** You understand the plan and its mapping from observed .NET behavior to Python. If sealing failed or inputs changed, resolve that and repeat the necessary run/review; never overwrite a freeze to continue.
+
+## Step 6 - Approve the plan and review tasks
+
+**Where:** The same **application chat**, then the application's editor.
+
+1. When satisfied with the current plan, send:
+
+   ```text
+   I approve the current plan. Create dependency-ordered tasks with files and acceptance criteria.
+   Do not execute them yet.
+   ```
+
+2. Wait for the agent to stop. Open `.github\upgrades\dotnet-to-fastapi\tasks.md` with **Ctrl+P**.
+3. Find tasks for the Python environment and packages, application behavior, HTTP routes, runtime/schema checks, and comparison against the unchanged baseline.
+4. Check that tasks identify prerequisites, files, and acceptance criteria, with places to record real commands and results. Editing frozen tests to get a pass must not be an implementation task.
+
+**Expected result:** A task list derived from the approved plan, with execution still paused.
+
+**Continue when:** You have reviewed the current tasks and are ready to authorize their execution.
+
+## Step 7 - Execute the approved tasks
+
+**Where:** The same **application chat**. Follow generated files in the application's Explorer.
+
+1. Send the separate execution approval:
+
+   ```text
+   I approve the current tasks for execution. Implement the Python API.
+   Keep the original production source and frozen baseline unchanged.
+   Run the same characterized HTTP expectations against the independent target.
+   ```
+
+2. Follow task progress and review package-install and tool approvals. The agent now creates `src\orderdesk_python`, root `requirements.txt`, and a local `.venv`.
+3. Inspect the changes and recorded results. The Python service must contain the business implementation, not call a CLR or forward requests to C#.
+4. If a target check fails, have the agent fix the migration and rerun it. Do not approve changes to frozen expectations, refreshed hashes, or unsupported success claims.
+
+**Expected result:** An independent Python implementation and updated task evidence, including actual target-check results.
+
+**Continue when:** The approved work is complete, no failing or unfinished task is being presented as success, and the original source and frozen baseline are unchanged.
+
+## Step 8 - Compare the results and finish
+
+**Where:** The application's editor and, for a rerun, a **PowerShell 7** terminal at the application root.
+
+1. Open `.github\upgrades\dotnet-to-fastapi\baseline-report.md` and `.github\upgrades\dotnet-to-fastapi\tasks.md` with **Ctrl+P**.
+2. Follow their links to the actual **Before** (.NET) and **After** (Python) results. Use the real counts from your run, not the counts from a rehearsal.
+3. Confirm the outcome:
+
+   | Evidence | What success looks like |
+   | --- | --- |
+   | Before and After results | The same nonzero set of test identities passes, with none failed, skipped, or incomplete. |
+   | Baseline integrity | The approved test expectations and covered files/hashes have not changed. |
+   | Independent execution | The Python comparison succeeds with the C# host stopped. |
+   | Runtime and cleanup | Runtime/OpenAPI checks match actual responses, and the agent has stopped its owned hosts. |
+
+4. Find the complete After command in the task evidence. It should include the actual generated target launcher, arguments, working directory, and readiness path. If it is missing, ask the agent to record it before finishing; do not guess a Python launch command.
+5. For a repeat comparison, run that exact command from the application root with the manual C# host stopped. The runner manages its own target host. See [baseline verification mechanics](modernization-plugins/README.md#baseline-verification-mechanics) for the runner options.
+
+**Expected result:** The same approved checks pass against both implementations, with reproducible commands and explicit limitations.
+
+**Continue when:** All evidence above is present. **You're finished:** keep your changes local. These checks cover the exercise, not exhaustive compatibility or production readiness.
+
+For blockers, use the [troubleshooting reference](modernization-plugins/README.md#troubleshooting). For an optional look inside the working plugin, follow the [read-only tooling tour](modernization-plugins/README.md#explore-the-plugin).
