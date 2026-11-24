@@ -21,76 +21,32 @@ Use the ready-made **orderdesk-migrator** plugin in **VS Code** to port the [Ord
 | .NET 10 SDK | Run the HTTP project generated during assessment, **not** the original API or migrated service. [SDK installation](https://learn.microsoft.com/en-us/dotnet/core/install/windows). |
 | Python 3.12 with pip | Used during approved execution for the generated target's local environment. [Python installation](https://www.python.org/downloads/windows/). Verify `py -3.12 --version`. |
 
-You can reuse applicable tools from earlier labs. Open a new terminal after installing tools. Initial restores need access to NuGet and the configured Python package feed; no IIS, SQL Server, separate NuGet CLI, or Azure subscription is needed.
+## Step 1 - Clone the workshop and application
 
-**Verification note:** The recorded successful rehearsal used SDK execution, not native VS Code interaction. Native UI verification and screenshots are deferred; see the [rehearsal details](modernization-plugins/README.md#rehearsal-and-verification-boundary).
+You'll use the workshop repository for the plugin and a separate OrderDesk repository for the migration.
 
-## Step 1 - Prepare two separate checkouts
+1. Create an empty workshop folder and open it in File Explorer. Type `pwsh` in the address bar and press **Enter**.
 
-**Where:** A local **PowerShell 7** window. For the existing-workshop option below, open it at your workshop repository root.
-
-You need two repositories, with different roles:
-
-| Checkout | Role |
-| --- | --- |
-| `modernize-gh-copilot-labs` | Workshop instructions and the plugin package you install. |
-| `orderdesk-dotnet48-lab3` | A fresh application copy where Copilot will generate tests, reports, and Python code. |
-
-1. Choose a parent folder. This default works under your own home directory; change only `$labRoot` if you prefer another writable location:
+2. Clone both repositories into this folder:
 
    ```powershell
-   $labRoot = Join-Path $HOME 'copilot-labs'
-   New-Item -ItemType Directory -Path $labRoot -Force -ErrorAction Stop | Out-Null
+   git clone https://github.com/rmoreirao/modernize-gh-copilot-labs.git
+   git clone https://github.com/rmoreirao/orderdesk-dotnet48.git orderdesk-dotnet48-lab3
    ```
 
-2. Choose **one** workshop option:
-
-   **Option A - Clone the workshop for the first time:**
+3. Get the plugin folder's full path and copy the output for the installation in Step 3:
 
    ```powershell
-   $workshopRoot = Join-Path $labRoot 'modernize-gh-copilot-labs'
-   if (Test-Path -LiteralPath $workshopRoot) { throw 'Workshop folder already exists. Use Option B instead.' }
-   git clone https://github.com/rmoreirao/modernize-gh-copilot-labs.git $workshopRoot
-   if ($LASTEXITCODE -ne 0) { throw 'Workshop clone failed.' }
+   (Resolve-Path .\modernize-gh-copilot-labs\labs\03-custom-plugin\modernization-plugins\plugins\orderdesk-migrator).Path
    ```
 
-   **Option B - Use your existing workshop checkout:**
-
-   Run this from the root of `modernize-gh-copilot-labs`, not from a lab subfolder:
+4. Open the application in VS Code:
 
    ```powershell
-   $workshopRoot = (Get-Location).Path
+   code -n .\orderdesk-dotnet48-lab3
    ```
 
-3. In the **same PowerShell window**, resolve the plugin folder and clone a fresh application:
-
-   ```powershell
-   $pluginRoot = (Resolve-Path -LiteralPath (
-       Join-Path $workshopRoot 'labs\03-custom-plugin\modernization-plugins\plugins\orderdesk-migrator'
-   ) -ErrorAction Stop).Path
-   $appRoot = Join-Path $labRoot 'orderdesk-dotnet48-lab3'
-   if (Test-Path -LiteralPath $appRoot) { throw 'Choose a new application folder; do not overwrite or reuse an earlier run.' }
-   git clone https://github.com/rmoreirao/orderdesk-dotnet48.git $appRoot
-   if ($LASTEXITCODE -ne 0) { throw 'Application clone failed.' }
-   Write-Output "Application folder: $appRoot"
-   Write-Output "Plugin folder to install: $pluginRoot"
-   ```
-
-   If the application folder exists, change its name in the `$appRoot` assignment and rerun this block. Preserve previous work; do not delete it or reuse approvals from another attempt.
-
-4. Save or copy the printed **plugin folder** path for Step 3, then open the application in a new VS Code window:
-
-   ```powershell
-   code -n $appRoot
-   ```
-
-   If `code` is unavailable, open VS Code and use **File > Open Folder** to select the printed application folder. Open only that folder, not the workshop or a combined workspace.
-
-The path variables above belong to the original PowerShell session; they do not automatically exist in VS Code's new terminals. Keep the workshop checkout available for installation, but do not copy plugin files into the application.
-
-**Expected result:** The application window shows `src\OrderDesk.Legacy`, and you have the absolute plugin-folder path ready.
-
-**Continue when:** You are in the fresh application workspace, separate from the workshop checkout and any earlier migration.
+   If `code` isn't available, use **File > Open Folder** in VS Code and select `orderdesk-dotnet48-lab3`. Open the application folder, not the whole workshop folder.
 
 ## Step 2 - Run the original API
 
@@ -279,3 +235,9 @@ A **contract** records what the original API actually does: its requests, respon
 **Continue when:** All evidence above is present. **You're finished:** keep your changes local. These checks cover the exercise, not exhaustive compatibility or production readiness.
 
 For blockers, use the [troubleshooting reference](modernization-plugins/README.md#troubleshooting). For an optional look inside the working plugin, follow the [read-only tooling tour](modernization-plugins/README.md#explore-the-plugin).
+
+## Clean up
+
+Save any work you want to keep, stop the hosts you started for this lab, and close the application's VS Code window. You can then delete the **dedicated workshop folder you created in Step 1** using File Explorer.
+
+This removes both checkouts and their generated application files. Installed tools and the VS Code plugin are managed separately; deleting the workshop folder does not uninstall them.
